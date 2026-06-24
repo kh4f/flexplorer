@@ -7,11 +7,17 @@ import type { FolderSettings } from '@/types'
 
 type DragPointerEvent = DragEvent | TouchEvent
 type InsertPosition = 'before' | 'after'
+interface SiblingDropTarget {
+	sibling: HTMLElement
+	folderEl: HTMLElement
+	folderPath: string
+	insertPos: InsertPosition
+}
 
 const ROOT_PATH = '/'
 const ROOT_FOLDER_SELECTOR = '[data-type="file-explorer"] > .nav-files-container > div'
 const TREE_ITEM_SELECTOR = '.tree-item'
-const DRAGGABLE_CANDIDATES_SELECTOR = '.tree-item:not(.nav-folder:is([data-dragging], :has(> .is-selected)) .tree-item)'
+const DRAGGING_CLASS = 'fp-dragging'
 const DRAGGING_SELECTOR = '[data-dragging]'
 const DROP_SIBLING_SELECTOR = '[data-drop-sibling]'
 const INSERT_POS_SELECTOR = '[data-insert-pos]'
@@ -33,9 +39,13 @@ export class DndEngine {
 	private explorerEl?: HTMLElement
 	private explorerRect?: DOMRect
 	private draggingItem?: TAbstractFile
+	private draggingEl: HTMLElement | null = null
 	private dropSibling: HTMLElement | null = null
 	private dropFolder: HTMLElement | null = null
 	private insertPos: InsertPosition = 'before'
+	private dropSiblingIndicator: HTMLElement | null = null
+	private dropFolderIndicator: HTMLElement | null = null
+	private indicatorInsertPos: InsertPosition | null = null
 	private pointerY = 0
 	private autoscrollRaf = 0
 	private expandTimeout = 0
@@ -44,6 +54,9 @@ export class DndEngine {
 	constructor(private readonly plugin: Flexplorer) {}
 
 	attach(explorerEl: HTMLElement) {
+		if (this.explorerEl === explorerEl) return this.log('DnD already attached')
+		if (this.explorerEl) this.detach()
+
 		this.log('Attaching to', explorerEl)
 		this.explorerEl = explorerEl
 
@@ -63,6 +76,8 @@ export class DndEngine {
 		this.explorerEl.removeEventListener(this.dragEvent, this.onDrag)
 		this.explorerEl.removeEventListener(this.dropEvent, this.onDrop, { capture: true })
 		if (!Platform.isMobile) this.explorerEl.removeEventListener('dragend', this.onDragEnd)
+		this.clearDropIndicators()
+		this.explorerEl = undefined
 
 		this.log('DnD disabled')
 	}
@@ -81,7 +96,9 @@ export class DndEngine {
 		this.log('Drag started')
 		this.draggingItem = this.plugin.getExplorerView().files.get(treeItem)
 		this.explorerRect = this.explorerEl!.getBoundingClientRect()
+		this.draggingEl = treeItem
 		treeItem.dataset.dragging = ''
+		activeDocument.body.classList.add(DRAGGING_CLASS)
 	}
 
 	private readonly onDrag = this.rafThrottle((event: DragPointerEvent) => {
@@ -95,51 +112,18 @@ export class DndEngine {
 
 		if (this.isPointerOutsideExplorer(pointerX)) {
 			this.sparseLog('Pointer outside explorer, clearing drop indicators')
-			return this.clearDropIndicators(false)
+			this.dropSibling = null
+			this.dropFolder = null
+			this.updateDropIndicators()
+			return
 		}
 
 		this.startAutoscroll()
 
-		const draggingItem = this.draggingItem
-		let siblingCandidates = [...this.explorerEl!.querySelectorAll<HTMLElement>(DRAGGABLE_CANDIDATES_SELECTOR)]
-		if (this.plugin.settings.items[draggingItem.path].isPinned) {
-			siblingCandidates = siblingCandidates.filter(sibling => {
-				const siblingItem = this.plugin.getExplorerView().files.get(sibling)!
-				const inSameFolder = siblingItem.parent?.path === draggingItem.parent?.path
-				const isSiblingPinned = this.plugin.settings.pinnedFiles.includes(siblingItem.path)
-				return inSameFolder && isSiblingPinned
-			})
-		}
-
-		let closestDist = Infinity
-		for (const candidate of siblingCandidates) {
-			const rect = candidate.getBoundingClientRect()
-
-			let bottomY = rect.bottom
-			if (candidate.matches('.tree-item:nth-last-child(1 of .tree-item)')) {
-				let depth = 0
-				let el: HTMLElement | null = candidate.parentElement
-				while (el) {
-					if (el.matches('.nav-folder')) depth++
-					el = el.parentElement
-				}
-				if (depth) bottomY -= 5 * depth
-			}
-			const distToBottom = Math.abs(this.pointerY - bottomY)
-
-			let distToTop = Infinity
-			if (candidate.matches('.tree-item:nth-child(1 of .tree-item)')) distToTop = Math.abs(this.pointerY - rect.top)
-
-			const dist = Math.min(distToBottom, distToTop)
-			if (dist < closestDist) {
-				closestDist = dist
-				this.insertPos = distToBottom < distToTop ? 'after' : 'before'
-				this.dropSibling = candidate
-			}
-		}
-
-		const hoveredEl = activeDocument.elementFromPoint(pointerX, this.pointerY) as HTMLElement
-		const folderTitle = hoveredEl.closest('.nav-folder-title')
+		const hoveredEl = activeDocument.elementFromPoint(pointerX, this.pointerY)
+		const folderTitle = hoveredEl?.closest<HTMLElement>('.nav-folder-title')
+		this.dropSibling = null
+		this.dropFolder = null
 		let shouldClearExpand = true
 
 		if (folderTitle) {
@@ -160,21 +144,21 @@ export class DndEngine {
 			}
 		}
 
-		if (shouldClearExpand) this.clearPendingExpand()
-
-		this.clearDropIndicators(false)
-		if (this.dropSibling) {
-			this.dropFolder = this.dropSibling.parentElement!.closest<HTMLElement>(`${ROOT_FOLDER_SELECTOR}, .nav-folder`)!
-			const folderPath = this.plugin.getExplorerView().files.get(this.dropFolder)?.path ?? ROOT_PATH
-			const folderSettings = this.plugin.settings.items[folderPath] as FolderSettings
-			if (folderSettings.sortOrder === 'custom') {
-				this.dropSibling.dataset.dropSibling = ''
-				this.dropSibling.dataset.insertPos = this.insertPos
-			} else {
-				this.dropSibling = null
+		if (shouldClearExpand) {
+			this.clearPendingExpand()
+			const treeItem = hoveredEl?.closest<HTMLElement>(TREE_ITEM_SELECTOR)
+			if (treeItem) {
+				const dropTarget = this.getSiblingDropTarget(treeItem)
+				if (dropTarget) {
+					this.dropSibling = dropTarget.sibling
+					this.dropFolder = dropTarget.folderEl
+					this.insertPos = dropTarget.insertPos
+					const folderSettings = this.plugin.settings.items[dropTarget.folderPath] as FolderSettings | undefined
+					if (folderSettings?.sortOrder !== 'custom') this.dropSibling = null
+				}
 			}
 		}
-		if (this.dropFolder) this.dropFolder.dataset.dropFolder = ''
+		this.updateDropIndicators()
 
 		// prevent Obsidian's native drop-target expansion from competing with custom DnD handling
 		this.plugin.getExplorerView().lastDropTargetEl = null
@@ -227,8 +211,8 @@ export class DndEngine {
 		siblingPath: string | undefined,
 		insertPosition: InsertPosition,
 	) {
-		const folderSettings = this.plugin.settings.items[dropFolderPath] as FolderSettings
-		if (draggingItem.path === newPath && folderSettings.sortOrder !== 'custom') {
+		const folderSettings = this.plugin.settings.items[dropFolderPath] as FolderSettings | undefined
+		if (draggingItem.path === newPath && folderSettings?.sortOrder !== 'custom') {
 			return this.log(`Item '${draggingItem.path}' is already in the target folder and folder does not have custom order`)
 		}
 		this.plugin.orderManager.move(draggingItem.path, newPath, siblingPath, insertPosition)
@@ -276,16 +260,84 @@ export class DndEngine {
 	}
 
 	private clearDropIndicators(resetState = true) {
-		activeDocument.querySelectorAll<HTMLElement>(DROP_SIBLING_SELECTOR).forEach(el => delete el.dataset.dropSibling)
-		activeDocument.querySelectorAll<HTMLElement>(INSERT_POS_SELECTOR).forEach(el => delete el.dataset.insertPos)
-		activeDocument.querySelectorAll<HTMLElement>(DROP_FOLDER_SELECTOR).forEach(el => delete el.dataset.dropFolder)
+		if (this.dropSiblingIndicator) {
+			delete this.dropSiblingIndicator.dataset.dropSibling
+			delete this.dropSiblingIndicator.dataset.insertPos
+		}
+		if (this.dropFolderIndicator) delete this.dropFolderIndicator.dataset.dropFolder
+		this.dropSiblingIndicator = null
+		this.dropFolderIndicator = null
+		this.indicatorInsertPos = null
 		if (resetState) {
-			activeDocument.querySelectorAll<HTMLElement>(DRAGGING_SELECTOR).forEach(el => delete el.dataset.dragging)
+			activeDocument.querySelectorAll<HTMLElement>(DROP_SIBLING_SELECTOR).forEach(el => delete el.dataset.dropSibling)
+			activeDocument.querySelectorAll<HTMLElement>(INSERT_POS_SELECTOR).forEach(el => delete el.dataset.insertPos)
+			activeDocument.querySelectorAll<HTMLElement>(DROP_FOLDER_SELECTOR).forEach(el => delete el.dataset.dropFolder)
+			if (this.draggingEl) delete this.draggingEl.dataset.dragging
+			else activeDocument.querySelectorAll<HTMLElement>(DRAGGING_SELECTOR).forEach(el => delete el.dataset.dragging)
 			this.draggingItem = undefined
+			this.draggingEl = null
 			this.dropSibling = null
 			this.insertPos = 'before'
 			this.dropFolder = null
+			activeDocument.body.classList.remove(DRAGGING_CLASS)
 		}
+	}
+
+	private updateDropIndicators() {
+		const siblingChanged = this.dropSiblingIndicator !== this.dropSibling || this.indicatorInsertPos !== this.insertPos
+		if (siblingChanged && this.dropSiblingIndicator) {
+			delete this.dropSiblingIndicator.dataset.dropSibling
+			delete this.dropSiblingIndicator.dataset.insertPos
+		}
+		if (siblingChanged) {
+			this.dropSiblingIndicator = this.dropSibling
+			this.indicatorInsertPos = this.dropSibling ? this.insertPos : null
+			if (this.dropSibling) {
+				this.dropSibling.dataset.dropSibling = ''
+				this.dropSibling.dataset.insertPos = this.insertPos
+			}
+		}
+
+		const dropFolderIndicator = this.dropSibling ? null : this.dropFolder
+		if (this.dropFolderIndicator !== dropFolderIndicator) {
+			if (this.dropFolderIndicator) delete this.dropFolderIndicator.dataset.dropFolder
+			this.dropFolderIndicator = dropFolderIndicator
+			if (dropFolderIndicator) dropFolderIndicator.dataset.dropFolder = ''
+		}
+	}
+
+	private getSiblingDropTarget(candidate: HTMLElement): SiblingDropTarget | null {
+		if (!this.explorerEl || !this.draggingItem || this.isExcludedDropSibling(candidate)) return null
+
+		const explorerFiles = this.plugin.getExplorerView().files
+		const folderEl = candidate.parentElement!.closest<HTMLElement>(`${ROOT_FOLDER_SELECTOR}, .nav-folder`)!
+		const folderPath = explorerFiles.get(folderEl)?.path ?? ROOT_PATH
+		const rect = candidate.getBoundingClientRect()
+		const insertPos = this.pointerY < rect.top + rect.height / 2 ? 'before' : 'after'
+		return { sibling: candidate, folderEl, folderPath, insertPos }
+	}
+
+	private isExcludedDropSibling(candidate: HTMLElement) {
+		if (candidate === this.draggingEl) return true
+
+		const candidateItem = this.plugin.getExplorerView().files.get(candidate)
+		if (!candidateItem) return true
+
+		const draggingItem = this.draggingItem!
+		const draggingItemSettings = this.plugin.settings.items[draggingItem.path] as { isPinned?: boolean } | undefined
+		if (draggingItemSettings?.isPinned) {
+			const inSameFolder = candidateItem.parent?.path === draggingItem.parent?.path
+			const isSiblingPinned = this.plugin.settings.pinnedFiles.includes(candidateItem.path)
+			if (!inSameFolder || !isSiblingPinned) return true
+		}
+
+		for (let el = candidate.parentElement; el && el !== this.explorerEl; el = el.parentElement) {
+			if (el.matches('.nav-folder')) {
+				if (el.hasAttribute('data-dragging')) return true
+				if (el.firstElementChild?.classList.contains('is-selected')) return true
+			}
+		}
+		return false
 	}
 
 	private readonly handleAutoscroll = () => {
@@ -420,10 +472,8 @@ void `css
 		}
 
 		&[data-drop-folder] {
-			body:not(:has([data-drop-sibling])) & {
-				background-color: hsla(var(--interactive-accent-hsl), 0.1);
-				border-radius: var(--radius-s);
-			}
+			background-color: hsla(var(--interactive-accent-hsl), 0.1);
+			border-radius: var(--radius-s);
 
 			> .nav-folder-title { color: var(--nav-item-color-highlighted); }
 		}
@@ -431,7 +481,7 @@ void `css
 }
 
 /* hide the tooltip because it can show the wrong drop folder during dragging */
-body:has([data-dragging]) .drag-ghost {
+body.fp-dragging .drag-ghost {
 	display: none;
 }
 `
