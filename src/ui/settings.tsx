@@ -9,7 +9,7 @@ export class SettingsTab extends PluginSettingTab {
 
 	display() {
 		this.containerEl.empty()
-		const persistOrderOnCreateDeleteDesc = activeDocument.createDocumentFragment()
+		const persistOrderOnCreateDeleteDesc = activeWindow.createFragment()
 		persistOrderOnCreateDeleteDesc.append('Update data.json immediately when files are created or deleted. Disable this if your sync service, especially Obsidian Sync, creates sync conflicts when merging data.json across devices after file create/delete events. ')
 		persistOrderOnCreateDeleteDesc.createEl('a', {
 			text: 'Issue #120 discussion',
