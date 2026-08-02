@@ -22,7 +22,7 @@ export class DndEngine {
 	private readonly sparseLog = this.initSparseLog(1000)
 
 	private readonly dragStartEvent = Platform.isMobile ? 'touchstart' : 'dragstart'
-	private readonly dragEvent = Platform.isMobile ? 'touchmove' : 'drag'
+	private readonly dragEvent = Platform.isMobile ? 'touchmove' : 'dragover'
 	private readonly dropEvent = Platform.isMobile ? 'touchend' : 'drop'
 
 	private readonly scrollZone = 60
@@ -88,6 +88,7 @@ export class DndEngine {
 		if (!this.draggingItem) return
 		this.sparseLog('Dragging')
 
+		if (!(event instanceof TouchEvent)) event.preventDefault() // otherwise dragover prevents drop
 		if (Platform.isMobile) event.preventDefault() // prevent swiping explorer horizontally on mobile
 
 		const pointerX = this.getPointerX(event)
@@ -216,7 +217,9 @@ export class DndEngine {
 			this.moveItem(draggingItem, newPath, dropFolderPath, siblingPath, this.insertPos)
 		}
 
-		if (Platform.isMobile) this.onDragEnd()
+		// skipping this can make drop indicators stay after drop
+		//if (Platform.isMobile) 
+		this.onDragEnd()
 		this.plugin.getExplorerView().lastDropTargetEl = null
 	}
 
