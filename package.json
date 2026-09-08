@@ -14,8 +14,7 @@
 	"scripts": {
 		"dev": "tsdown",
 		"watch": "tsdown -w",
-		"prod": "bun -b tsdown -p",
-		"build": "bun prod",
+		"build": "tsdown -p",
 		"lint": "tsc && eslint"
 	},
 	"devDependencies": {

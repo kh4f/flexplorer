@@ -14,7 +14,7 @@ jobs:
 
       - run: bun i
       - run: bun lint
-      - run: bun prod
+      - run: bun run build
 
       - uses: actions/attest@v4
         with:
