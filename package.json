@@ -17,8 +17,7 @@
 		"prod": "bun -b tsdown -p",
 		"build": "bun prod",
 		"typecheck": "tsc",
-		"lint": "eslint",
-		"release": "bunx relion -b manifest.json -t ''"
+		"lint": "eslint"
 	},
 	"devDependencies": {
 		"@eslint-react/eslint-plugin": "^5.15.0",
