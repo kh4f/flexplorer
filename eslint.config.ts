@@ -4,7 +4,7 @@ import ts from 'typescript-eslint'
 import react from '@eslint-react/eslint-plugin'
 import hooks from 'eslint-plugin-react-hooks'
 import stylistic from '@stylistic/eslint-plugin'
-import voicss from '@voicss/eslint'
+import voicss from 'voicss-eslint'
 import obsidian from 'eslint-plugin-obsidianmd'
 
 export default defineConfig([
