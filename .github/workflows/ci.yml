@@ -1,6 +1,8 @@
 name: CI
 
-on: { push: { branches: '**' } }
+on:
+  push:
+    branches: '**'
 
 jobs:
   ci:
