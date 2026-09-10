@@ -5,7 +5,7 @@
 	"author": "kh4f",
 	"license": "MIT",
 	"repository": "https://github.com/kh4f/flexplorer",
-	"homepage": "https://github.com/kh4f/flexplorer#readme",
+	"homepage": "https://github.com/kh4f/flexplorer",
 	"bugs": "https://github.com/kh4f/flexplorer/issues",
 	"keywords": ["obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting"],
 	"trustedDependencies": ["obsidian-typings"],
