@@ -1,11 +1,11 @@
 import { dirname } from 'node:path'
+import { defineConfig } from 'tsdown'
 import voicss from 'voicss/vite'
-import type { UserConfig } from 'tsdown'
 
 const prod = process.argv.includes('-p')
 const dir = dirname(import.meta.url)
 
-export default {
+export default defineConfig({
 	entry: 'src/plugin.ts',
 	css: { fileName: 'styles.css' },
 	format: 'cjs',
@@ -23,4 +23,4 @@ export default {
 	env: { DEV: !prod },
 	deps: { neverBundle: 'obsidian', onlyBundle: ['react', 'react-dom', 'scheduler'] },
 	plugins: [voicss()],
-} satisfies UserConfig
+})
