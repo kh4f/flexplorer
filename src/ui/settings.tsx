@@ -5,7 +5,9 @@ import type Flexplorer from '@/plugin'
 import type { NewItemPlacement } from '@/types'
 
 export class SettingsTab extends PluginSettingTab {
-	constructor(readonly app: App, readonly plugin: Flexplorer) { super(app, plugin) }
+	constructor(readonly app: App, readonly plugin: Flexplorer) {
+		super(app, plugin)
+	}
 
 	display() {
 		this.containerEl.empty()
