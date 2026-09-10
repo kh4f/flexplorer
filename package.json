@@ -7,7 +7,7 @@
 	"repository": "https://github.com/kh4f/flexplorer",
 	"homepage": "https://github.com/kh4f/flexplorer#readme",
 	"bugs": "https://github.com/kh4f/flexplorer/issues",
-	"keywords": ["flexplorer", "obsidian-flexplorer", "obsidian-plugin", "obsidian-file-explorer"],
+	"keywords": ["obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting"],
 	"trustedDependencies": ["obsidian-typings"],
 	"type": "module",
 	"main": "main.js",
