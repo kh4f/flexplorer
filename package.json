@@ -12,8 +12,7 @@
 	"type": "module",
 	"main": "main.js",
 	"scripts": {
-		"dev": "tsdown",
-		"watch": "tsdown -w",
+		"dev": "tsdown -w",
 		"build": "tsdown -p",
 		"lint": "tsc && eslint"
 	},
