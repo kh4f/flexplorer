@@ -148,14 +148,16 @@ export class OrderManager {
 	}
 
 	getSortedItems(
-		folderSettings: FolderSettings,
+		folderSettings: FolderSettings | undefined,
 		items: FileTreeItem[],
-		sortOrder: SortOrder = folderSettings.sortOrder,
+		sortOrder: SortOrder = folderSettings?.sortOrder ?? 'byName',
 	): FileTreeItem[] {
 		return items.slice().sort((aItem, bItem) => {
 			const [a, b] = [aItem.file, bItem.file]
-			const isAPinned = this.plugin.settings.items[a.path].isPinned
-			const isBPinned = this.plugin.settings.items[b.path].isPinned
+			const aSettings = this.plugin.settings.items[a.path] as BaseItemSettings | undefined
+			const bSettings = this.plugin.settings.items[b.path] as BaseItemSettings | undefined
+			const isAPinned = aSettings?.isPinned ?? false
+			const isBPinned = bSettings?.isPinned ?? false
 			if (isAPinned !== isBPinned) return isAPinned ? -1 : 1
 
 			if (sortOrder !== 'custom') {
@@ -166,8 +168,9 @@ export class OrderManager {
 
 			switch (sortOrder) {
 				case 'custom': {
-					const aIndex = folderSettings.customOrder.indexOf(a.name)
-					const bIndex = folderSettings.customOrder.indexOf(b.name)
+					const customOrder = folderSettings?.customOrder ?? []
+					const aIndex = customOrder.indexOf(a.name)
+					const bIndex = customOrder.indexOf(b.name)
 					if (aIndex === -1 || bIndex === -1) return this.compareByName(a, b)
 					return aIndex - bIndex
 				}

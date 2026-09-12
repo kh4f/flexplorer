@@ -44,7 +44,9 @@ export class Patcher {
 			if (triggerEl.getAttribute('aria-label') !== sortButtonLabel || !triggerEl.classList.contains('nav-action-button'))
 				return originalShowAtMouseEvent.call(this, evt)
 
-			const folderSettings = plugin.settings.items[ROOT_PATH] as FolderSettings
+			const folderSettings = plugin.settings.items[ROOT_PATH] as FolderSettings | undefined
+			if (!folderSettings) return originalShowAtMouseEvent.call(this, evt)
+
 			const customMenu = populateSortMenu(new Menu(), folderSettings.sortOrder, plugin, ROOT_PATH, folderSettings)
 				.addItem(item => item.setTitle('Show hidden')
 					.setChecked(plugin.settings.showHidden)
