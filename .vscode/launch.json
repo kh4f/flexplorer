@@ -5,7 +5,6 @@
 		"type": "chrome",
 		"request": "launch",
 		"runtimeExecutable": "${env:LOCALAPPDATA}/Programs/Obsidian/Obsidian.exe",
-		"port": 9222,
-		"preLaunchTask": "build",
+		"port": 9222
 	}]
 }
