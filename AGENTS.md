@@ -1,6 +1,6 @@
 # AGENTS.md
 
-**Flexplorer** is an Obsidian plugin that enhances the native file explorer with custom sorting, pinning, and hiding features.
+**Flexplorer** is an Obsidian plugin that enhances the file explorer with custom sorting, pinning, and hiding.
 
 ## Stack
 - TypeScript v6
@@ -14,10 +14,9 @@
 - UI layer (`src/ui/`): React components and Obsidian views
 
 ## Scripts
-- `bun dev` — development build
+- `bun dev` — development build in watch mode
 - `bun run build` — production build
-- `bun typecheck` — type checking
-- `bun eslint` — linting
+- `bun lint` — linting
 
 ## Guidelines
-- Run `bun typecheck` and `bun eslint` after making changes
+- Run `bun lint` after making changes
