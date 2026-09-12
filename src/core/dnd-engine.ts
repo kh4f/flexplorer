@@ -218,7 +218,7 @@ export class DndEngine {
 		}
 
 		// skipping this can make drop indicators stay after drop
-		//if (Platform.isMobile) 
+		// if (Platform.isMobile)
 		this.onDragEnd()
 		this.plugin.getExplorerView().lastDropTargetEl = null
 	}
