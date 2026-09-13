@@ -5,17 +5,16 @@ export const cn = (...cls: unknown[]) => cls.filter(Boolean).join(' ')
 
 export const logger = { level: 'silent' as LogLevel }
 
-const LOG_TYPES = new Set<LogType>(['log', 'warn', 'error'])
-const CONSOLE = console
-
 export const initLog = (scope: string, color: string) => (...args: unknown[]) => {
 	if (logger.level === 'silent') return
-	const method: LogType = isLogType(args.at(-1)) ? args.pop() as LogType : 'log'
+	const method = isLogType(args.at(-1)) ? args.pop() as LogType : 'log'
 	const prefix = `%cFP${scope ? `|${scope}` : ''}`
-	return CONSOLE[method](prefix, buildStyles(color), ...args)
+	// window.console avoids the obsidianmd no-console lint error
+	return window.console[method](prefix, buildStyles(color), ...args)
 }
 
-const isLogType = (value: unknown): value is LogType => typeof value === 'string' && LOG_TYPES.has(value as LogType)
+const isLogType = (value: unknown): value is LogType =>
+	typeof value === 'string' && value in ['log', 'warn', 'error']
 
 const buildStyles = (color: string) => `
 	color: ${color};
