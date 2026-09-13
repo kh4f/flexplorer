@@ -11,7 +11,6 @@ export default defineConfig({
 	format: 'cjs',
 	outDir: '.',
 	clean: false,
-	fixedExtension: true,
 	minify: prod,
 	sourcemap: !prod,
 	outputOptions: {
