@@ -2,24 +2,27 @@ import { dirname } from 'node:path'
 import { defineConfig } from 'tsdown'
 import voicss from 'voicss/vite'
 
-const prod = process.argv.includes('-p')
 const dir = dirname(import.meta.url)
 
-export default defineConfig({
-	entry: 'src/plugin.ts',
-	css: { fileName: 'styles.css' },
-	format: 'cjs',
-	outDir: '.',
-	clean: false,
-	minify: prod,
-	sourcemap: !prod,
-	outputOptions: {
-		entryFileNames: 'main.js',
-		sourcemapBaseUrl: dir,
-		sourcemapPathTransform: relSourcePath => `${dir}/${relSourcePath}`,
-	},
-	define: { 'process.env.NODE_ENV': prod ? '"production"' : '"development"' },
-	env: { DEV: !prod },
-	deps: { neverBundle: 'obsidian', onlyBundle: ['react', 'react-dom', 'scheduler'] },
-	plugins: [voicss()],
+export default defineConfig(({ watch }) => {
+	const isDev = Boolean(watch)
+
+	return {
+		entry: 'src/plugin.ts',
+		css: { fileName: 'styles.css' },
+		format: 'cjs',
+		outDir: '.',
+		clean: false,
+		minify: !isDev,
+		sourcemap: isDev,
+		outputOptions: {
+			entryFileNames: 'main.js',
+			sourcemapBaseUrl: dir,
+			sourcemapPathTransform: relSourcePath => `${dir}/${relSourcePath}`,
+		},
+		define: { 'process.env.NODE_ENV': isDev ? '"development"' : '"production"' },
+		env: { DEV: isDev },
+		deps: { neverBundle: 'obsidian', onlyBundle: ['react', 'react-dom', 'scheduler'] },
+		plugins: [voicss()],
+	}
 })

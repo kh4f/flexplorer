@@ -13,7 +13,7 @@
 	"main": "main.js",
 	"scripts": {
 		"dev": "tsdown -w",
-		"build": "tsdown -p",
+		"build": "tsdown",
 		"lint": "tsc && eslint"
 	},
 	"devDependencies": {
