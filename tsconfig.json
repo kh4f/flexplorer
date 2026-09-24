@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"skipLibCheck": true,
+		"verbatimModuleSyntax": true,
 		"types": ["bun"],
 		"paths": { "@/*": ["./src/*"] },
 		"jsx": "react-jsx"
