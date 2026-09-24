@@ -14,7 +14,7 @@
 	<b>
 		<a href="#-features">Features</a>&nbsp; •&nbsp;
 		<a href="#%EF%B8%8F-usage">Usage</a>&nbsp; •&nbsp;
-		<a href="#-installation">Installation</a>&nbsp; •&nbsp;
+		<a href="#-install">Install</a>&nbsp; •&nbsp;
 		<a href="#-credits">Credits</a>
 	</b>
 	<br><br>
@@ -27,13 +27,7 @@
 - **Pinning & hiding:** keep important files at the top, hide irrelevant ones
 - **Mobile support:** all features work on mobile as well
 
-## 🕹️ Usage
-![guide](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/guide.png)
-
-#### Notes:
-- To drag items on touch devices, hold them **by the right edge**
-
-## 📥 Installation
+## 📥 Install
 - **Via the Obsidian Community**: https://community.obsidian.md/plugins/flexplorer
 - **Using the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)**: `Add Beta Plugin` → `kh4f/flexplorer`
 - **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, and `styles.css` into `vault/.obsidian/plugins/flexplorer/`
