@@ -18,7 +18,7 @@
 	},
 	"devDependencies": {
 		"@eslint-react/eslint-plugin": "^5.19.0",
-		"@kh4f/eslint-config": "^0.5.0",
+		"@kh4f/eslint-config": "^0.6.0",
 		"@tsdown/css": "^0.23.0",
 		"@types/bun": "^1.4.2",
 		"@types/react-dom": "^19.3.0",
