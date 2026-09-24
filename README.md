@@ -32,6 +32,11 @@
 - **Using the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)**: `Add Beta Plugin` → `kh4f/flexplorer`
 - **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, and `styles.css` into `vault/.obsidian/plugins/flexplorer/`
 
+## 🕹️ Usage
+![guide](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/guide.png)
+
+- To drag items on touch devices, hold them by the right edge
+
 ## 💖 Credits
 - **Inspiration**: [Obsidian Bartender](https://github.com/Mara-Li/obsidian-bartender), [Custom File Explorer sorting](https://github.com/SebastianMC/obsidian-custom-sort), [File Explorer++](https://github.com/kelszo/obsidian-file-explorer-plus)
 - **Huge thanks** to [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer) and others for testing and feedback!
