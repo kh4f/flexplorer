@@ -42,7 +42,7 @@ export class SettingsTab extends PluginSettingTab {
 			)
 		new Setting(this.containerEl)
 			.setName('Debug mode')
-			.setDesc('Show debug logs in the console')
+			.setDesc('Show debug logs in the DevTools console')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.debugMode)
 				.onChange(enableDebugMode => {
