@@ -30,7 +30,7 @@
 ## 📥 Install
 - **Via the Obsidian Community**: https://community.obsidian.md/plugins/flexplorer
 - **Using the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)**: `Add Beta Plugin` → `kh4f/flexplorer`
-- **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, and `styles.css` into `vault/.obsidian/plugins/flexplorer/`
+- **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, `styles.css` into `vault/.obsidian/plugins/flexplorer/`
 
 ## 🕹️ Usage
 ![guide](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/guide.png)
