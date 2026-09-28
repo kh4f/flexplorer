@@ -5,6 +5,6 @@
 	"description": "Enhance the file explorer with custom sorting, pinning, and hiding.",
 	"author": "kh4f",
 	"authorUrl": "https://github.com/kh4f",
-	"minAppVersion": "1.12.0",
+	"minAppVersion": "1.13.0",
 	"isDesktopOnly": false
 }
