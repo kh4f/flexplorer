@@ -30,12 +30,9 @@ export class ExplorerManager {
 		const observer = new MutationObserver(mutations => {
 			for (const mutation of mutations) {
 				for (const node of mutation.addedNodes) {
-					const explorerEl = node.instanceOf(HTMLElement)
-						? this.findExplorerEl(node)
-						: null
-					if (explorerEl) {
+					if (node.instanceOf(HTMLElement) && node.matches(EXPLORER_SELECTOR)) {
 						if (!watch) this.disconnectObserver(observer)
-						return onMount(explorerEl)
+						return onMount(node)
 					}
 				}
 			}
@@ -57,11 +54,6 @@ export class ExplorerManager {
 
 	private getExplorerEl() {
 		return activeDocument.querySelector<HTMLElement>(EXPLORER_SELECTOR)
-	}
-
-	private findExplorerEl(el: HTMLElement) {
-		if (el.matches(EXPLORER_SELECTOR)) return el
-		return el.querySelector<HTMLElement>(EXPLORER_SELECTOR)
 	}
 
 	private disconnectObserver(observer: MutationObserver) {

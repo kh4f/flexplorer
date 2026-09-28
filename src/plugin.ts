@@ -88,7 +88,6 @@ export default class Flexplorer extends Plugin {
 
 	private readonly onExplorerRemount = (el: HTMLElement) => {
 		this.log('Explorer remounted, re-attaching DnD engine:', el)
-		this.explorerManager.syncIndicators()
 		this.dndEngine.attach(el)
 	}
 
@@ -107,8 +106,8 @@ export default class Flexplorer extends Plugin {
 		}))
 		this.registerEvent(this.app.vault.on('modify', item => {
 			const parentPath = item.parent!.path
-			const folderSettings = this.settings.items[parentPath] as FolderSettings | undefined
-			if (folderSettings?.sortOrder.startsWith('byModifiedTime')) {
+			const folderSettings = this.settings.items[parentPath] as FolderSettings
+			if (folderSettings.sortOrder.startsWith('byModifiedTime')) {
 				this.log(`File modified in '${item.path}' with modified-time-based sorting, sorting explorer`)
 				this.sortExplorer()
 			}
@@ -118,9 +117,7 @@ export default class Flexplorer extends Plugin {
 				this.log(`File menu opened for '${file.path}'`)
 				if (file.path === '/') return this.log('Root folder menu, skipping')
 
-				const fileSettings = this.settings.items[file.path] ??= file instanceof TFolder
-					? { isPinned: false, isHidden: false, sortOrder: 'custom', customOrder: file.children.map(child => child.name) }
-					: { isPinned: false, isHidden: false }
+				const fileSettings = this.settings.items[file.path]
 
 				if (file instanceof TFolder) {
 					const folderSettings = fileSettings as FolderSettings
