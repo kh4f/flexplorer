@@ -39,5 +39,5 @@
 
 ## 💖 Credits
 - **Inspiration**: [Obsidian Bartender](https://github.com/Mara-Li/obsidian-bartender), [Custom File Explorer sorting](https://github.com/SebastianMC/obsidian-custom-sort), [File Explorer++](https://github.com/kelszo/obsidian-file-explorer-plus)
-- **Huge thanks** to [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer) and others for testing and feedback!
-- **Special thanks** to [@Mara-Li](https://github.com/Mara-Li) for contributions!
+- **Code contributions**: [@Mara-Li](https://github.com/Mara-Li), [@michalgregor](https://github.com/michalgregor), [@MichalNawrocik](https://github.com/MichalNawrocik)
+- **Bug reports & feature requests**: [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer)
