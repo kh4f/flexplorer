@@ -4,29 +4,21 @@ import type Flexplorer from '@/plugin'
 
 const EXPLORER_SELECTOR = '[data-type="file-explorer"] > .nav-files-container'
 
-interface ObserveExplorerMountOptions {
-	checkExisting?: boolean
-	watch?: boolean
-}
-
 export class ExplorerManager {
-	private readonly log = initLog('EXPLORER-MANAGER', '#FF3B55')
+	private readonly log = initLog('EXPLORER MANAGER', '#FF3B55')
 	private readonly observers: MutationObserver[] = []
 
 	constructor(private readonly plugin: Flexplorer) {}
 
-	waitForExplorerEl() {
-		return new Promise<HTMLElement>(resolve => this.observeExplorerMount(resolve, { checkExisting: true }))
-	}
-
-	observeExplorerMount(onMount: (el: HTMLElement) => void, { checkExisting = false, watch = false }: ObserveExplorerMountOptions = {}) {
+	observeExplorerMount(onMount: (el: HTMLElement) => void, { checkExisting = false, watch = false }): void {
 		if (checkExisting) {
-			const explorerEl = this.getExplorerEl()
+			const explorerEl = document.querySelector<HTMLElement>(EXPLORER_SELECTOR)
 			if (explorerEl) {
 				onMount(explorerEl)
 				if (!watch) return
 			}
 		}
+
 		const observer = new MutationObserver(mutations => {
 			for (const mutation of mutations) {
 				for (const node of mutation.addedNodes) {
@@ -37,26 +29,23 @@ export class ExplorerManager {
 				}
 			}
 		})
-		observer.observe(activeDocument.body, { childList: true, subtree: true })
+		observer.observe(document.body, { childList: true, subtree: true })
 		this.observers.push(observer)
 	}
 
-	disconnectObservers() {
-		this.observers.forEach(obs => obs.disconnect())
-		this.observers.length = 0
-	}
-
-	syncIndicators() {
+	syncIndicators(): void {
 		Object.values(this.plugin.getExplorerView().fileItems)
 			.forEach(item => mountIndicator(item, this.plugin.settings.items[item.file.path]))
 		this.log('Indicators synced')
 	}
 
-	private getExplorerEl() {
-		return activeDocument.querySelector<HTMLElement>(EXPLORER_SELECTOR)
+	disconnectObservers(): void {
+		this.observers.forEach(obs => obs.disconnect())
+		this.observers.length = 0
+		this.log('Observers disconnected')
 	}
 
-	private disconnectObserver(observer: MutationObserver) {
+	private disconnectObserver(observer: MutationObserver): void {
 		observer.disconnect()
 		const observerIndex = this.observers.indexOf(observer)
 		if (observerIndex !== -1) this.observers.splice(observerIndex, 1)

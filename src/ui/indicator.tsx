@@ -7,11 +7,25 @@ import type { ItemSettings } from '@/types'
 
 const roots = new WeakMap<HTMLElement, ReturnType<typeof createRoot>>()
 
-const Indicator = ({ itemSettings }: { itemSettings: ItemSettings }) => {
+export function mountIndicator(item: AbstractFileTreeItem<TAbstractFile>, itemSettings: ItemSettings) {
+	const indicatorEl = item.coverEl.querySelector<HTMLElement>('.fp-indicator')
+		?? item.coverEl.createDiv({ cls: 'fp-indicator' })
+
+	let root = roots.get(indicatorEl)
+	if (!root) {
+		root = createRoot(indicatorEl)
+		roots.set(indicatorEl, root)
+	}
+	root.render(<Indicator itemSettings={itemSettings}/>)
+
+	item.el.toggleClass('fp-hidden', itemSettings.isHidden)
+}
+
+function Indicator({ itemSettings }: { itemSettings: ItemSettings }) {
 	return itemSettings.isPinned ? <PinIndicator/> : null
 }
 
-const PinIndicator = () => {
+function PinIndicator() {
 	const ref = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -19,19 +33,6 @@ const PinIndicator = () => {
 	}, [])
 
 	return <div className='pin-indicator' ref={ref}/>
-}
-
-export const mountIndicator = (item: AbstractFileTreeItem<TAbstractFile>, itemSettings: ItemSettings) => {
-	const indicatorEl = item.coverEl.querySelector<HTMLElement>('.fp-indicator')
-		?? item.coverEl.createDiv({ cls: 'fp-indicator' })
-	let root = roots.get(indicatorEl)
-	if (!root) {
-		root = createRoot(indicatorEl)
-		roots.set(indicatorEl, root)
-	}
-
-	root.render(<Indicator itemSettings={itemSettings}/>)
-	item.el.toggleClass('fp-hidden', itemSettings.isHidden)
 }
 
 void `css

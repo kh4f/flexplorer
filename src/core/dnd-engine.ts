@@ -1,157 +1,260 @@
-import { Platform, TAbstractFile, TFile, TFolder } from 'obsidian'
-import type { FolderTreeItem } from 'obsidian-typings'
+import { TAbstractFile, TFile, TFolder, Platform } from 'obsidian'
+import type { AbstractFileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
 import { initLog } from '@/utils'
 import type Flexplorer from '@/plugin'
 import type { FolderSettings } from '@/types'
 
-type DragPointerEvent = DragEvent | TouchEvent
-type InsertPosition = 'before' | 'after'
-
-const ROOT_PATH = '/'
-const ROOT_FOLDER_SELECTOR = '[data-type="file-explorer"] > .nav-files-container > div'
-const TREE_ITEM_SELECTOR = '.tree-item'
-const DRAGGABLE_CANDIDATES_SELECTOR = '.tree-item:not(.nav-folder:is([data-dragging], :has(> .is-selected)) .tree-item)'
-const DRAGGING_SELECTOR = '[data-dragging]'
-const DROP_SIBLING_SELECTOR = '[data-drop-sibling]'
-const INSERT_POS_SELECTOR = '[data-insert-pos]'
-const DROP_FOLDER_SELECTOR = '[data-drop-folder]'
-
 export class DndEngine {
-	private readonly log = initLog('DND-ENGINE', '#a6ff00')
-	private readonly sparseLog = this.initSparseLog(1000)
+	private readonly log = initLog('DND ENGINE', '#a6ff00')
+	private readonly sparseLog = this.initSparseLog(500)
 
-	private readonly dragStartEvent = Platform.isMobile ? 'touchstart' : 'dragstart'
-	private readonly dragEvent = Platform.isMobile ? 'touchmove' : 'dragover'
-	private readonly dropEvent = Platform.isMobile ? 'touchend' : 'drop'
+	private explorerEl: HTMLElement | null = null
+	private explorerRect: DOMRect | null = null
 
-	private readonly scrollZone = 60
-	private readonly baseScrollSpeed = 25
-	private readonly handleWidth = 36
-	private readonly expandDelay = 800
+	private readonly dragStartEvent = Platform.isDesktop ? 'dragstart' : 'touchstart'
+	private readonly dragOverEvent = Platform.isDesktop ? 'dragover' : 'touchmove'
+	private readonly dropEvent = Platform.isDesktop ? 'drop' : 'touchend'
 
-	private explorerEl?: HTMLElement
-	private explorerRect?: DOMRect
-	private draggingItem?: TAbstractFile
+	private draggedItem: TAbstractFile | null = null
 	private dropSibling: HTMLElement | null = null
 	private dropFolder: HTMLElement | null = null
-	private insertPos: InsertPosition = 'before'
-	private pointerY = 0
+	private insertSide: 'before' | 'after' = 'before'
+	private pointer = { x: 0, y: 0 }
+
+	private readonly autoscrollZoneHeight = 60
+	private readonly edgeScrollSpeed = 20
 	private autoscrollRaf = 0
-	private expandTimeout = 0
+
+	private readonly expandDelay = 1000
 	private expandTarget: HTMLElement | null = null
+	private expandTimeout = 0
+
+	private readonly mobileDragHandleWidth = 36
 
 	constructor(private readonly plugin: Flexplorer) {}
 
-	attach(explorerEl: HTMLElement) {
-		this.log('Attaching to', explorerEl)
+	attach(explorerEl: HTMLElement): void {
+		if (explorerEl === this.explorerEl) return this.log('Already attached to', explorerEl)
 		this.explorerEl = explorerEl
 
 		explorerEl.addEventListener(this.dragStartEvent, this.onDragStart)
-		explorerEl.addEventListener(this.dragEvent, this.onDrag)
-		explorerEl.addEventListener(this.dropEvent, this.onDrop, { capture: true })
-		if (!Platform.isMobile) explorerEl.addEventListener('dragend', this.onDragEnd)
+		// `dragover` instead of `drag` because `drag` fires on the drag source and stops firing once the source is
+		// scrolled out of view by Chromium autoscroll;
+		// listen on the document so it keeps firing out of the explorer, keeping `lastPointerY` updated for autoscroll
+		// acceleration and letting `onDragOver` detect whether the cursor is still inside the explorer
+		document.addEventListener(this.dragOverEvent, this.onDragOver)
+		// Chromium suppresses drag events (including `dragover`) during its autoscroll, so recompute the drop target
+		// from the last known pointer position on the `scroll` event
+		explorerEl.addEventListener('scroll', this.onScroll)
+		// capture phase to intercept the drop before Obsidian's handler and prevent it from moving the item by calling
+		// `preventDefault()`;
+		// listen on the document to detect drops outside the explorer and manually call `onDragEnd()` because `dragend`
+		// doesn't fire when the drag source is scrolled out of view by Chromium autoscroll (same behavior as `drag`)
+		document.addEventListener(this.dropEvent, this.onDrop, { capture: true })
+		// `dragend` fires even when the `drop` is canceled (except for the case above)
+		explorerEl.addEventListener('dragend', this.onDragEnd)
 
-		this.log('DnD enabled')
+		this.log('Attached to', explorerEl)
 	}
 
-	detach() {
-		if (!this.explorerEl) return
+	detach(): void {
+		document.removeEventListener(this.dragOverEvent, this.onDragOver)
+		document.removeEventListener(this.dropEvent, this.onDrop, { capture: true })
 
-		this.onDrag.cancel()
-		this.explorerEl.removeEventListener(this.dragStartEvent, this.onDragStart)
-		this.explorerEl.removeEventListener(this.dragEvent, this.onDrag)
-		this.explorerEl.removeEventListener(this.dropEvent, this.onDrop, { capture: true })
-		if (!Platform.isMobile) this.explorerEl.removeEventListener('dragend', this.onDragEnd)
-
-		this.log('DnD disabled')
-	}
-
-	private readonly onDragStart = (event: DragPointerEvent) => {
-		const treeItem = (event.target as HTMLElement).closest<HTMLElement>(TREE_ITEM_SELECTOR)
-		if (!treeItem) return
-
-		if (Platform.isMobile) {
-			const distRight = treeItem.getBoundingClientRect().right - this.handleWidth
-			const pointerX = this.getPointerX(event)
-			if (pointerX < distRight) return this.log('Drag not in handle area')
-			event.preventDefault()
+		if (this.explorerEl) {
+			this.explorerEl.removeEventListener(this.dragStartEvent, this.onDragStart)
+			this.explorerEl.removeEventListener('scroll', this.onScroll)
+			this.explorerEl.removeEventListener('dragend', this.onDragEnd)
 		}
 
-		this.log('Drag started')
-		this.draggingItem = this.plugin.getExplorerView().files.get(treeItem)
-		this.explorerRect = this.explorerEl!.getBoundingClientRect()
-		treeItem.dataset.dragging = ''
+		this.log('Detached from', this.explorerEl)
 	}
 
-	private readonly onDrag = this.rafThrottle((event: DragPointerEvent) => {
-		if (!this.draggingItem) return
-		this.sparseLog('Dragging')
+	private readonly onDragStart = (event: DragEvent | TouchEvent): void => {
+		const closestTreeItem = (event.target as HTMLElement).closest<HTMLElement>('.tree-item')
+		if (!closestTreeItem) return this.log('Drag started outside a tree item, ignoring')
 
-		if (!(event instanceof TouchEvent)) event.preventDefault() // otherwise dragover prevents drop
-		if (Platform.isMobile) event.preventDefault() // prevent swiping explorer horizontally on mobile
+		if (Platform.isMobile) {
+			const distToRight = closestTreeItem.getBoundingClientRect().right - this.mobileDragHandleWidth
+			const pointerX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
+			if (pointerX < distToRight) return this.log('Drag started outside the handle area, ignoring')
+		}
 
-		const pointerX = this.getPointerX(event)
-		this.pointerY = this.getPointerY(event)
+		this.draggedItem = this.plugin.getExplorerView().files.get(closestTreeItem) ?? null
+		if (!this.draggedItem) return this.log('Drag started on an unknown tree item, ignoring')
 
-		if (this.isPointerOutsideExplorer(pointerX)) {
-			this.sparseLog('Pointer outside explorer, clearing drop indicators')
-			return this.clearDropIndicators(false)
+		this.explorerRect = this.explorerEl!.getBoundingClientRect()
+		document.body.classList.add('fp-dragging')
+
+		this.log(`Started dragging '${this.draggedItem.path}'`)
+	}
+
+	private readonly onDragOver = (event: DragEvent | TouchEvent): void => {
+		if (!this.draggedItem) return
+
+		// prevent Obsidian from unexpectedly expanding the collapsed dragged folder and the collapsed folder that
+		// ends up right after the dropped item
+		this.plugin.getExplorerView().lastDropTargetEl = null
+		// prevent swiping the explorer horizontally on mobile
+		if (Platform.isMobile) event.preventDefault()
+
+		this.pointer = {
+			x: event instanceof TouchEvent ? event.touches[0].clientX : event.clientX,
+			y: event instanceof TouchEvent ? event.touches[0].clientY : event.clientY,
 		}
 
 		this.startAutoscroll()
 
-		const draggingItem = this.draggingItem
-		let siblingCandidates = [...this.explorerEl!.querySelectorAll<HTMLElement>(DRAGGABLE_CANDIDATES_SELECTOR)]
-		if (this.plugin.settings.items[draggingItem.path].isPinned) {
-			siblingCandidates = siblingCandidates.filter(sibling => {
-				const siblingItem = this.plugin.getExplorerView().files.get(sibling)!
-				const inSameFolder = siblingItem.parent?.path === draggingItem.parent?.path
-				const isSiblingPinned = this.plugin.settings.items[siblingItem.path].isPinned
-				return inSameFolder && isSiblingPinned
+		const rect = this.explorerRect!
+		const isInsideExplorer = this.pointer.x >= rect.left && this.pointer.x <= rect.right
+			&& this.pointer.y >= rect.top && this.pointer.y <= rect.bottom
+		if (isInsideExplorer) this.updateDragState()
+		else {
+			this.sparseLog('Cursor left the explorer, clearing drop indicators')
+			this.updateDragState.cancel()
+			this.clearDropIndicators()
+			this.dropSibling = null
+			this.dropFolder = null
+		}
+	}
+
+	private readonly onScroll = (): void => {
+		if (!this.draggedItem) return
+
+		this.sparseLog('Scrolled during dragging, updating drag state')
+		this.updateDragState()
+	}
+
+	private readonly onDrop = (event: DragEvent | TouchEvent): void => {
+		if (!this.draggedItem) return
+		this.log(`Dropped '${this.draggedItem.path}'`)
+
+		if (!this.explorerEl?.contains(event.target as Node)) {
+			this.log('Dropped outside the explorer, skipping the move')
+			// call `onDragEnd()` manually because `dragend` doesn't fire when the drag source is scrolled out of
+			// view by Chromium autoscroll (same behavior as `drag`)
+			this.onDragEnd()
+			return
+		}
+
+		event.preventDefault() // cancel the default action so Obsidian skips its own file move
+
+		let dropSiblingPath = this.resolveItemPath(this.dropSibling)
+		const dropFolderPath = this.resolveItemPath(this.dropFolder)
+		if (!dropFolderPath) return this.log('Drop folder not found, skipping the move')
+
+		const selectedItems = this.getSelectedItems()
+		const isDraggedSelected = selectedItems.some(item => item.file === this.draggedItem)
+
+		if (isDraggedSelected) {
+			this.log('Moving selected items:', selectedItems)
+			selectedItems.forEach((item, idx) => {
+				const insertSide = idx === 0 ? this.insertSide : 'after'
+				const newPath = this.resolveNewPath(item.file, dropFolderPath)
+				this.moveItem(item.file, newPath, dropFolderPath, dropSiblingPath, insertSide)
+				dropSiblingPath = newPath
 			})
+		} else {
+			const newPath = this.resolveNewPath(this.draggedItem, dropFolderPath)
+			this.moveItem(this.draggedItem, newPath, dropFolderPath, dropSiblingPath, this.insertSide)
 		}
 
-		let closestDist = Infinity
+		if (Platform.isMobile) this.onDragEnd()
+	}
+
+	private readonly onDragEnd = (): void => {
+		if (!this.draggedItem) return
+		this.log(`Ended dragging '${this.draggedItem.path}'`)
+
+		this.updateDragState.cancel()
+		this.stopAutoscroll()
+
+		this.clearDropIndicators()
+		this.draggedItem = null
+		this.dropSibling = null
+		this.dropFolder = null
+		this.explorerRect = null
+		document.body.classList.remove('fp-dragging')
+	}
+
+	private readonly updateDragState: (() => void) & { cancel: () => void } = this.rafThrottle((): void => {
+		if (!this.draggedItem) return
+
+		this.clearDropIndicators()
+		this.resolveDropTarget()
+		this.applyDropIndicators()
+
+		this.sparseLog(`Dragging '${this.draggedItem.path}' ${this.insertSide} ` +
+			`'${this.resolveItemPath(this.dropSibling)}' in '${this.resolveItemPath(this.dropFolder)}'`)
+		this.sparseLog.flush()
+	})
+
+	private clearDropIndicators(): void {
+		delete this.dropSibling?.dataset.dropSibling
+		delete this.dropFolder?.dataset.dropFolder
+	}
+
+	private resolveDropTarget(): void {
+		const isDraggedPinned = this.plugin.settings.items[this.draggedItem!.path].isPinned
+
+		this.resolveDropSibling(isDraggedPinned)
+		if (this.dropSibling) this.dropFolder = this.dropSibling.parentElement!.closest<HTMLElement>(
+			'[data-type="file-explorer"] > .nav-files-container > div, .nav-folder')!
+
+		this.resolveHoveredFolder(isDraggedPinned)
+
+		const dropFolderPath = this.resolveItemPath(this.dropFolder)!
+		const dropFolderSettings = this.plugin.settings.items[dropFolderPath] as FolderSettings
+		if (dropFolderSettings.sortOrder !== 'custom') this.dropSibling = null
+	}
+
+	private resolveDropSibling(isDraggedPinned: boolean): void {
+		const siblingCandidates = [...this.explorerEl!.querySelectorAll<HTMLElement>(
+			'.tree-item:not(.nav-folder:has(> .tree-item-self:is(.is-being-dragged, .is-selected)) .tree-item)')]
+		const firstUnpinnedByParent = new Map<HTMLElement, HTMLElement>()
+		let shortestDist = Infinity
+
 		for (const candidate of siblingCandidates) {
-			const rect = candidate.getBoundingClientRect()
+			const candidateItem = this.plugin.getExplorerView().files.get(candidate)!
+			const isCandidatePinned = this.plugin.settings.items[candidateItem.path].isPinned
+			const parent = candidate.parentElement!
+			if (!isCandidatePinned && !firstUnpinnedByParent.has(parent)) firstUnpinnedByParent.set(parent, candidate)
 
-			let bottomY = rect.bottom
-			if (candidate.matches('.tree-item:nth-last-child(1 of .tree-item)')) {
-				let depth = 0
-				let el: HTMLElement | null = candidate.parentElement
-				while (el) {
-					if (el.matches('.nav-folder')) depth++
-					el = el.parentElement
-				}
-				if (depth) bottomY -= 5 * depth
-			}
-			const distToBottom = Math.abs(this.pointerY - bottomY)
+			if (isDraggedPinned !== isCandidatePinned) continue
+			const areInSameFolder = this.draggedItem!.parent?.path === candidateItem.parent?.path
+			if (isDraggedPinned && !areInSameFolder) continue
 
-			let distToTop = Infinity
-			if (candidate.matches('.tree-item:nth-child(1 of .tree-item)')) distToTop = Math.abs(this.pointerY - rect.top)
-
+			const candidateRect = candidate.getBoundingClientRect()
+			const distToBottom = Math.abs(this.pointer.y - candidateRect.bottom)
+			const isFirstUnpinned = candidate.matches('.tree-item:nth-child(1 of .tree-item)')
+				|| (!isDraggedPinned && candidate === firstUnpinnedByParent.get(candidate.parentElement!))
+			const distToTop = isFirstUnpinned ? Math.abs(this.pointer.y - candidateRect.top) : Infinity
 			const dist = Math.min(distToBottom, distToTop)
-			if (dist < closestDist) {
-				closestDist = dist
-				this.insertPos = distToBottom < distToTop ? 'after' : 'before'
+
+			if (dist < shortestDist) {
+				shortestDist = dist
 				this.dropSibling = candidate
+				this.insertSide = distToBottom < distToTop ? 'after' : 'before'
 			}
 		}
+	}
 
-		const hoveredEl = activeDocument.elementFromPoint(pointerX, this.pointerY) as HTMLElement
-		const folderTitle = hoveredEl.closest('.nav-folder-title')
+	private resolveHoveredFolder(isDraggedPinned: boolean): void {
+		const hoveredEl = activeDocument.elementFromPoint(this.pointer.x, this.pointer.y) as HTMLElement
+		const closestFolderTitle = hoveredEl.closest('.nav-folder-title')
 		let shouldClearExpand = true
 
-		if (folderTitle) {
-			const titleRect = folderTitle.getBoundingClientRect()
-			if (this.pointerY > titleRect.top + 10 && this.pointerY < titleRect.bottom - 10) {
-				this.sparseLog('Hovering over folder title, treating it as drop folder')
-				const folderEl = folderTitle.parentElement!
-				this.dropSibling = null
+		if (closestFolderTitle && !isDraggedPinned) {
+			const titleRect = closestFolderTitle.getBoundingClientRect()
+			if (this.pointer.y > titleRect.top + 5 && this.pointer.y < titleRect.bottom - 5) {
+				this.sparseLog(`Hovering over folder title center, treating it as drop folder`)
+				const folderEl = closestFolderTitle.parentElement!
 				this.dropFolder = folderEl
+				this.dropSibling = null
 
-				if (folderEl.matches('.is-collapsed')) {
+				const isCollapsedFolder = this.dropFolder.classList.contains('is-collapsed')
+				if (isCollapsedFolder) {
 					if (folderEl !== this.expandTarget) {
 						this.sparseLog('Folder is collapsed, starting expand timeout')
 						this.scheduleFolderExpand(folderEl)
@@ -162,84 +265,51 @@ export class DndEngine {
 		}
 
 		if (shouldClearExpand) this.clearPendingExpand()
+	}
 
-		this.clearDropIndicators(false)
-		if (this.dropSibling) {
-			this.dropFolder = this.dropSibling.parentElement!.closest<HTMLElement>(`${ROOT_FOLDER_SELECTOR}, .nav-folder`)!
-			const folderPath = this.plugin.getExplorerView().files.get(this.dropFolder)?.path ?? ROOT_PATH
-			const folderSettings = this.plugin.settings.items[folderPath] as FolderSettings
-			if (folderSettings.sortOrder === 'custom') {
-				this.dropSibling.dataset.dropSibling = ''
-				this.dropSibling.dataset.insertPos = this.insertPos
-			} else {
-				this.dropSibling = null
-			}
-		}
+	private applyDropIndicators(): void {
+		if (this.dropSibling) this.dropSibling.dataset.dropSibling = this.insertSide
 		if (this.dropFolder) this.dropFolder.dataset.dropFolder = ''
-
-		// prevent Obsidian's native drop-target expansion from competing with custom DnD handling
-		this.plugin.getExplorerView().lastDropTargetEl = null
-
-		this.sparseLog.flush()
-	})
-
-	private readonly onDrop = (event: DragPointerEvent) => {
-		if (!this.draggingItem) return
-		this.log('Dropped')
-		event.preventDefault()
-
-		let siblingPath: string | undefined
-		let dropFolderPath: string | undefined
-		if (this.dropSibling) {
-			const siblingItem = this.plugin.getExplorerView().files.get(this.dropSibling)!
-			siblingPath = siblingItem.path
-			dropFolderPath = siblingItem.parent!.path
-		} else if (this.dropFolder) {
-			dropFolderPath = this.plugin.getExplorerView().files.get(this.dropFolder)?.path ?? ROOT_PATH
-		} else {
-			return this.log('Nowhere to drop')
-		}
-
-		const draggingItem = this.draggingItem
-		const selectedItems = this.getSelectedItems()
-		const isDraggingSelected = selectedItems.some(item => item.file === draggingItem)
-		if (isDraggingSelected) {
-			this.log('Moving selected items:', selectedItems)
-			let insertPos = this.insertPos
-			selectedItems.forEach(item => {
-				const newPath = this.getNewPath(item.file, dropFolderPath)
-				this.moveItem(item.file, newPath, dropFolderPath, siblingPath, insertPos)
-				siblingPath = newPath
-				insertPos = 'after'
-			})
-		} else {
-			const newPath = this.getNewPath(draggingItem, dropFolderPath)
-			this.moveItem(draggingItem, newPath, dropFolderPath, siblingPath, this.insertPos)
-		}
-
-		// skipping this can make drop indicators stay after drop
-		// if (Platform.isMobile)
-		this.onDragEnd()
-		this.plugin.getExplorerView().lastDropTargetEl = null
 	}
 
-	private moveItem(
-		draggingItem: TAbstractFile,
-		newPath: string,
-		dropFolderPath: string,
-		siblingPath: string | undefined,
-		insertPosition: InsertPosition,
-	) {
-		const folderSettings = this.plugin.settings.items[dropFolderPath] as FolderSettings
-		if (draggingItem.path === newPath && folderSettings.sortOrder !== 'custom') {
-			return this.log(`Item '${draggingItem.path}' is already in the target folder and folder does not have custom order`)
-		}
-		this.plugin.orderManager.move(draggingItem.path, newPath, siblingPath, insertPosition)
-		void this.plugin.app.fileManager.renameFile(draggingItem, newPath)
+	private scheduleFolderExpand(folderEl: HTMLElement): void {
+		this.clearPendingExpand()
+
+		this.expandTarget = folderEl
+		this.expandTimeout = window.setTimeout(() => {
+			const folderPath = this.resolveItemPath(folderEl)!
+			const folderItem = this.plugin.getExplorerView().fileItems[folderPath] as FolderTreeItem
+			void folderItem.setCollapsed(false, true)
+			this.log(`Folder '${folderPath}' expanded after timeout`)
+		}, this.expandDelay)
 	}
 
-	private getNewPath(item: TAbstractFile, newParentPath: string) {
-		let newPath = `${newParentPath}/${item.name}`.replace(/^\/+/, '')
+	private clearPendingExpand(): void {
+		window.clearTimeout(this.expandTimeout)
+		this.expandTarget = null
+	}
+
+	private getSelectedItems(): AbstractFileTreeItem<TFile>[] {
+		const selectedItems = [...this.plugin.getExplorerView().tree.selectedDoms]
+		const nonNestedItems = selectedItems.filter(selected => !selectedItems.some(selectedFolder =>
+			selectedFolder.file instanceof TFolder
+			&& selectedFolder.file.path !== selected.file.path
+			&& selected.file.path.startsWith(selectedFolder.file.path + '/'),
+		))
+
+		return nonNestedItems.sort((a, b) => {
+			const elA = a.el
+			const elB = b.el
+			if (elA.compareDocumentPosition(elB) & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+			if (elA.compareDocumentPosition(elB) & Node.DOCUMENT_POSITION_PRECEDING) return 1
+			return 0
+		})
+	}
+
+	private resolveNewPath(item: TAbstractFile, newParentPath: string): string {
+		const prefix = newParentPath === '/' ? '' : `${newParentPath}/`
+		let newPath = `${prefix}${item.name}`
+
 		const isPathChanged = item.path !== newPath
 		const duplicate = this.plugin.app.vault.getAbstractFileByPathInsensitive(newPath)
 		if (isPathChanged && duplicate) {
@@ -250,102 +320,73 @@ export class DndEngine {
 				newPath = this.plugin.app.vault.getAvailablePath(newPath, '')
 			}
 		}
+
 		return newPath
 	}
 
-	private getSelectedItems() {
-		const items = [...this.plugin.getExplorerView().tree.selectedDoms]
-		const nonNestedItems = items.filter(selectedItem => !items.some(selectedFolder =>
-			selectedFolder.file instanceof TFolder
-			&& selectedFolder.file.path !== selectedItem.file.path
-			&& selectedItem.file.path.startsWith(selectedFolder.file.path + '/'),
-		))
-		return nonNestedItems.sort((a, b) => {
-			const elA = a.el
-			const elB = b.el
-			if (elA.compareDocumentPosition(elB) & Node.DOCUMENT_POSITION_FOLLOWING) return -1
-			if (elA.compareDocumentPosition(elB) & Node.DOCUMENT_POSITION_PRECEDING) return 1
-			return 0
-		})
+	private resolveItemPath(el: HTMLElement | null): string | null {
+		if (!el) return null
+		if (el === this.explorerEl?.firstElementChild) return '/'
+
+		return this.plugin.getExplorerView().files.get(el)?.path ?? null
 	}
 
-	private readonly onDragEnd = () => {
-		this.log('Drag ended')
-		this.onDrag.cancel()
+	private moveItem(
+		draggedItem: TAbstractFile,
+		newPath: string,
+		folderPath: string,
+		siblingPath: string | null,
+		insertSide: typeof this.insertSide,
+	): void {
+		const folderSettings = this.plugin.settings.items[folderPath] as FolderSettings
+		if (draggedItem.path === newPath && folderSettings.sortOrder !== 'custom')
+			return this.log(`Item '${draggedItem.path}' is already in the drop folder ` +
+				`and folder's sort order is not 'custom', skipping the move`)
+
+		this.plugin.orderManager.move(draggedItem.path, newPath, siblingPath ?? undefined, insertSide)
+		void this.plugin.app.fileManager.renameFile(draggedItem, newPath)
+	}
+
+	private startAutoscroll(): void {
+		if (!this.autoscrollRaf) this.autoscrollRaf = window.requestAnimationFrame(this.handleAutoscroll)
+	}
+
+	private stopAutoscroll(): void {
 		window.cancelAnimationFrame(this.autoscrollRaf)
 		this.autoscrollRaf = 0
-		this.clearPendingExpand()
-		this.clearDropIndicators()
 	}
 
-	private clearDropIndicators(resetState = true) {
-		activeDocument.querySelectorAll<HTMLElement>(DROP_SIBLING_SELECTOR).forEach(el => delete el.dataset.dropSibling)
-		activeDocument.querySelectorAll<HTMLElement>(INSERT_POS_SELECTOR).forEach(el => delete el.dataset.insertPos)
-		activeDocument.querySelectorAll<HTMLElement>(DROP_FOLDER_SELECTOR).forEach(el => delete el.dataset.dropFolder)
-		if (resetState) {
-			activeDocument.querySelectorAll<HTMLElement>(DRAGGING_SELECTOR).forEach(el => delete el.dataset.dragging)
-			this.draggingItem = undefined
-			this.dropSibling = null
-			this.insertPos = 'before'
-			this.dropFolder = null
+	private readonly handleAutoscroll = (): void => {
+		if (!this.explorerEl || !this.explorerRect || !this.draggedItem) {
+			this.autoscrollRaf = 0
+			return
 		}
-	}
 
-	private readonly handleAutoscroll = () => {
-		if (!this.explorerEl || !this.explorerRect) return
-
-		const topDist = this.pointerY - this.explorerRect.top
-		const bottomDist = this.explorerRect.bottom - this.pointerY
+		const distToTop = this.pointer.y - this.explorerRect.top
+		const distToBottom = this.explorerRect.bottom - this.pointer.y
 
 		let speed = 0
-		if (topDist < this.scrollZone) {
-			speed = -Math.max(0.1, 1 - topDist / this.scrollZone) * this.baseScrollSpeed
-		} else if (bottomDist < this.scrollZone) {
-			speed = Math.max(0.1, 1 - bottomDist / this.scrollZone) * this.baseScrollSpeed
+		if (distToTop < this.autoscrollZoneHeight) speed = -this.resolveScrollSpeed(distToTop)
+		else if (distToBottom < this.autoscrollZoneHeight) speed = this.resolveScrollSpeed(distToBottom)
+
+		// stop the loop when the cursor is away from the edges; the next `dragover` event restarts it
+		if (!speed) {
+			this.autoscrollRaf = 0
+			return
 		}
 
 		this.explorerEl.scrollTop += speed
 		this.autoscrollRaf = window.requestAnimationFrame(this.handleAutoscroll)
 	}
 
-	private startAutoscroll() {
-		if (!this.autoscrollRaf) {
-			this.autoscrollRaf = window.requestAnimationFrame(this.handleAutoscroll)
-		}
+	private resolveScrollSpeed(distToEdge: number): number {
+		// the scroll speed in px/frame based on the distance from the explorer edge;
+		// quadratic growth: 0 at the zone start, `edgeScrollSpeed` at the explorer edge, accelerating beyond it
+		return (1 - distToEdge / this.autoscrollZoneHeight) ** 2 * this.edgeScrollSpeed
 	}
 
-	private clearPendingExpand() {
-		window.clearTimeout(this.expandTimeout)
-		this.expandTarget = null
-	}
-
-	private scheduleFolderExpand(folderEl: HTMLElement) {
-		this.clearPendingExpand()
-		this.expandTarget = folderEl
-		this.expandTimeout = window.setTimeout(() => {
-			const folderPath = this.plugin.getExplorerView().files.get(folderEl)!.path
-			const folderItem = this.plugin.getExplorerView().fileItems[folderPath] as FolderTreeItem
-			void folderItem.setCollapsed(false, true)
-			this.log(`Folder '${folderPath}' expanded after timeout`)
-		}, this.expandDelay)
-	}
-
-	private isPointerOutsideExplorer(pointerX: number) {
-		return pointerX < this.explorerRect!.left
-			|| pointerX > this.explorerRect!.right
-			|| this.pointerY < this.explorerRect!.top
-			|| this.pointerY > this.explorerRect!.bottom
-	}
-
-	private getPointerX(event: DragPointerEvent) {
-		return event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
-	}
-
-	private getPointerY(event: DragPointerEvent) {
-		return event instanceof TouchEvent ? event.touches[0].clientY : event.clientY
-	}
-
-	private rafThrottle<T extends (...args: never[]) => void>(fn: T) {
+	private rafThrottle<T extends (...args: unknown[]) => void>(fn: T):
+		((...args: Parameters<T>) => void) & { cancel: () => void } {
 		let raf = 0
 		let latestArgs: Parameters<T>
 
@@ -368,19 +409,22 @@ export class DndEngine {
 		return throttled
 	}
 
-	private initSparseLog(delay: number) {
+	private initSparseLog(delay: number): ((...args: unknown[]) => void) & { flush: () => void } {
 		let lastFlush = 0
-		let buffer: unknown[][] = []
+		let buffer: unknown[] = []
 
-		const sparse = (...args: unknown[]) => buffer.push(args)
+		const sparse = (...args: unknown[]) =>
+			buffer.push(...(buffer.length ? ['\n', ...args] : args))
 
 		sparse.flush = () => {
 			if (!buffer.length) return
+
 			const now = Date.now()
 			if (now - lastFlush >= delay) {
 				lastFlush = now
-				for (const args of buffer) this.log(...args)
+				this.log(...buffer)
 			}
+
 			buffer = []
 		}
 
@@ -389,52 +433,65 @@ export class DndEngine {
 }
 
 void `css
-[data-type='file-explorer'] {
-	.tree-item[data-drop-sibling] {
-		position: relative;
+body.fp-dragging {
+	[data-type='file-explorer'] .nav-files-container {
+		/* disable Chromium's native autoscroll */
+		overflow: hidden !important;
 
-		/* drop indicators */
-		&[data-insert-pos='before']::before, &[data-insert-pos='after']::after {
-			content: '';
-			position: absolute;
-			display: block;
-			translate: 12px -1px;
-			height: 1px;
-			width: 90%;
-			left: 0px;
-			background: var(--color-accent);
+		/* offset the bottom edge of nested folders so the drop indicator can be positioned at each level */
+		.nav-folder-children {
+			padding-bottom: 5px;
 		}
 
-		/* offset adjacent indicators */
-		&.nav-folder[data-insert-pos='after']:not(.is-collapsed)::after {
-			transform: translateY(2px);
-		}
-		.nav-folder-children &[data-insert-pos='after']:nth-last-child(1 of .tree-item)::after {
-			transform: translateY(-2px);
-		}
-	}
-
-	/* replace Obsidian's drop-folder styling because it may target a different element */
-	> .nav-files-container > div, .nav-folder {
-		&.is-being-dragged-over {
-			background-color: revert;
-
-			> .nav-folder-title { color: var(--nav-item-color); }
-		}
-
-		&[data-drop-folder] {
-			body:not(:has([data-drop-sibling])) & {
-				background-color: hsla(var(--interactive-accent-hsl), 0.1);
-				border-radius: var(--radius-s);
+		.tree-item[data-drop-sibling] {
+			/* drop line */
+			position: relative;
+			&[data-drop-sibling='before']::before, &[data-drop-sibling='after']::after {
+				content: '';
+				position: absolute;
+				display: block;
+				translate: 12px -1px;
+				height: 2px;
+				width: 90%;
+				left: 0px;
+				z-index: 1;
+				border-radius: 10px;
+				background: var(--color-accent);
 			}
 
-			> .nav-folder-title { color: var(--nav-item-color-highlighted); }
+			/* offset adjacent indicators */
+			&.nav-folder[data-drop-sibling='after']:not(.is-collapsed)::after {
+				transform: translateY(2px);
+			}
+			.nav-folder-children &[data-drop-sibling='after']:nth-last-child(1 of .tree-item)::after {
+				transform: translateY(-2px);
+			}
+		}
+
+		/* replace Obsidian's drop-folder highlight because it may target a different element */
+		> div, .nav-folder {
+			&.is-being-dragged-over {
+				background-color: revert;
+
+				> .nav-folder-title {
+					color: var(--nav-item-color);
+				}
+			}
+
+			&[data-drop-folder] {
+				background-color: hsla(var(--interactive-accent-hsl), 0.05);
+				border-radius: var(--radius-s);
+
+				> .nav-folder-title {
+					color: var(--nav-item-color-highlighted);
+				}
+			}
 		}
 	}
-}
 
-/* hide the tooltip because it can show the wrong drop folder during dragging */
-body:has([data-dragging]) .drag-ghost {
-	display: none;
+	/* hide the tooltip because it may show the wrong drop folder during dragging */
+	.drag-ghost {
+		display: none;
+	}
 }
 `
