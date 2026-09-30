@@ -31,8 +31,8 @@ export class Patcher {
 	}
 
 	patchExplorerSortMenu(): void {
-		const patcher = this
 		const plugin = this.plugin
+		const log = this.log
 
 		const origShowAtMouseEvent = Menu.prototype.showAtMouseEvent
 
@@ -55,7 +55,7 @@ export class Patcher {
 					}),
 				)
 
-			patcher.log(`Custom sort menu opened`)
+			log(`Custom sort menu opened`)
 			return origShowAtMouseEvent.call(customMenu, evt)
 		}
 

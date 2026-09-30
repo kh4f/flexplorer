@@ -13,7 +13,6 @@ export default defineConfig([
 	{
 		rules: {
 			'@typescript-eslint/unbound-method': 'off',
-			'@typescript-eslint/no-this-alias': 'off',
 			'@typescript-eslint/no-dynamic-delete': 'off',
 		},
 	},
