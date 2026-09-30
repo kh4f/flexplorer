@@ -107,7 +107,7 @@ export class DndEngine {
 			siblingCandidates = siblingCandidates.filter(sibling => {
 				const siblingItem = this.plugin.getExplorerView().files.get(sibling)!
 				const inSameFolder = siblingItem.parent?.path === draggingItem.parent?.path
-				const isSiblingPinned = this.plugin.settings.pinnedFiles.includes(siblingItem.path)
+				const isSiblingPinned = this.plugin.settings.items[siblingItem.path].isPinned
 				return inSameFolder && isSiblingPinned
 			})
 		}

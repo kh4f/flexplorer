@@ -56,7 +56,6 @@ export class OrderManager {
 		if (from !== to) {
 			items[to] = items[from]
 			delete items[from]
-			this.plugin.settings.pinnedFiles = this.plugin.settings.pinnedFiles.map(p => p === from ? to : p)
 		}
 
 		if (fromParent && toParent) {
@@ -139,12 +138,6 @@ export class OrderManager {
 				delete this.plugin.settings.items[path]
 			}
 		}
-		for (const path of this.plugin.settings.pinnedFiles) {
-			if (!this.plugin.app.vault.getAbstractFileByPath(path)) {
-				this.plugin.settings.pinnedFiles.remove(path)
-			}
-		}
-		this.plugin.settings.pinnedFiles = this.plugin.settings.pinnedFiles.unique()
 	}
 
 	getSortedItems(
@@ -171,12 +164,12 @@ export class OrderManager {
 					if (aIndex === -1 || bIndex === -1) return this.compareByName(a, b)
 					return aIndex - bIndex
 				}
-				case 'byNameReverse': return this.compareByName(b, a)
-				case 'byCreatedTime': return this.compareByTimestamp(a, b, 'ctime', 'asc')
-				case 'byCreatedTimeReverse': return this.compareByTimestamp(a, b, 'ctime', 'desc')
-				case 'byModifiedTime': return this.compareByTimestamp(a, b, 'mtime', 'asc')
-				case 'byModifiedTimeReverse': return this.compareByTimestamp(a, b, 'mtime', 'desc')
-				case 'byName':
+				case 'byNameDesc': return this.compareByName(b, a)
+				case 'byCreatedTimeAsc': return this.compareByTimestamp(a, b, 'ctime', 'asc')
+				case 'byCreatedTimeDesc': return this.compareByTimestamp(a, b, 'ctime', 'desc')
+				case 'byModifiedTimeAsc': return this.compareByTimestamp(a, b, 'mtime', 'asc')
+				case 'byModifiedTimeDesc': return this.compareByTimestamp(a, b, 'mtime', 'desc')
+				case 'byNameAsc':
 				default: return this.compareByName(a, b)
 			}
 		})

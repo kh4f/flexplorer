@@ -2,16 +2,15 @@ export type NewItemPlacement = 'top' | 'bottom'
 
 export type SortOrder =
 	| 'custom'
-	| 'byName'
-	| 'byNameReverse'
-	| 'byCreatedTime'
-	| 'byCreatedTimeReverse'
-	| 'byModifiedTime'
-	| 'byModifiedTimeReverse'
+	| 'byNameAsc'
+	| 'byNameDesc'
+	| 'byCreatedTimeAsc'
+	| 'byCreatedTimeDesc'
+	| 'byModifiedTimeAsc'
+	| 'byModifiedTimeDesc'
 
 export interface Settings {
 	items: Record<string, ItemSettings>
-	pinnedFiles: string[]
 	showHidden: boolean
 	newItemPlacement: NewItemPlacement
 	persistOrderOnCreateDelete: boolean

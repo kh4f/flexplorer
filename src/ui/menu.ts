@@ -6,12 +6,12 @@ import type { FolderSettings, SortOrder } from '@/types'
 
 const SORT_OPTIONS: [string, SortOrder][] = [
 	['Custom order', 'custom'],
-	['File name (A → Z)', 'byName'],
-	['File name (Z → A)', 'byNameReverse'],
-	['Created time (new → old)', 'byCreatedTimeReverse'],
-	['Created time (old → new)', 'byCreatedTime'],
-	['Modified time (new → old)', 'byModifiedTimeReverse'],
-	['Modified time (old → new)', 'byModifiedTime'],
+	['File name (A → Z)', 'byNameAsc'],
+	['File name (Z → A)', 'byNameDesc'],
+	['Created time (new → old)', 'byCreatedTimeDesc'],
+	['Created time (old → new)', 'byCreatedTimeAsc'],
+	['Modified time (new → old)', 'byModifiedTimeDesc'],
+	['Modified time (old → new)', 'byModifiedTimeAsc'],
 ]
 
 export const populateSortMenu = (

@@ -8,11 +8,10 @@ import { Patcher } from '@/core/patcher'
 import { populateSortMenu } from '@/ui/menu'
 import { SettingsTab } from '@/ui/settings'
 import { initLog, logger } from '@/utils'
-import type { FolderSettings, Settings } from '@/types'
+import type { FolderSettings, Settings, SortOrder } from '@/types'
 
 const DEFAULT_SETTINGS: Settings = {
 	items: {},
-	pinnedFiles: [],
 	showHidden: false,
 	newItemPlacement: 'top',
 	persistOrderOnCreateDelete: true,
@@ -135,7 +134,6 @@ export default class Flexplorer extends Plugin {
 					.setIcon(fileSettings.isPinned ? 'pin-off' : 'pin')
 					.onClick(() => {
 						fileSettings.isPinned = !fileSettings.isPinned
-						this.syncPinnedFileState(file.path, fileSettings.isPinned)
 						void this.saveSettings()
 						this.sortExplorer()
 						this.explorerManager.syncIndicators()
@@ -152,8 +150,31 @@ export default class Flexplorer extends Plugin {
 		)
 	}
 
+	private migrateSettingsV4ToV5(): void {
+		const sortOrderMap: Record<string, SortOrder> = {
+			byName: 'byNameAsc',
+			byNameReverse: 'byNameDesc',
+			byCreatedTime: 'byCreatedTimeAsc',
+			byCreatedTimeReverse: 'byCreatedTimeDesc',
+			byModifiedTime: 'byModifiedTimeAsc',
+			byModifiedTimeReverse: 'byModifiedTimeDesc',
+			custom: 'custom',
+		}
+
+		delete (this.settings as { pinnedFiles?: unknown }).pinnedFiles
+
+		for (const itemSettings of Object.values(this.settings.items)) {
+			if (!('sortOrder' in itemSettings)) continue
+			const folderSettings = itemSettings
+			folderSettings.sortOrder = sortOrderMap[folderSettings.sortOrder]
+		}
+
+		this.log('Migrated settings from v4 to v5')
+	}
+
 	private async loadSettings() {
 		this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData() as Partial<Settings>) }
+		this.migrateSettingsV4ToV5()
 		this.log('Settings loaded:', this.settings)
 	}
 
@@ -164,10 +185,5 @@ export default class Flexplorer extends Plugin {
 
 	private syncShowHiddenClass() {
 		activeDocument.body.toggleClass('fp-show-hidden', this.settings.showHidden)
-	}
-
-	private syncPinnedFileState(filePath: string, isPinned: boolean) {
-		if (isPinned) this.settings.pinnedFiles.push(filePath)
-		else this.settings.pinnedFiles.remove(filePath)
 	}
 }
