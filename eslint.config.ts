@@ -15,7 +15,6 @@ export default defineConfig([
 			'@typescript-eslint/unbound-method': 'off',
 			'@typescript-eslint/no-this-alias': 'off',
 			'@typescript-eslint/no-dynamic-delete': 'off',
-			'@typescript-eslint/no-explicit-any': 'off',
 		},
 	},
 	voicss.configs.recommended,

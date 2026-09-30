@@ -345,7 +345,7 @@ export class DndEngine {
 		return event instanceof TouchEvent ? event.touches[0].clientY : event.clientY
 	}
 
-	private rafThrottle<T extends (...args: any[]) => void>(fn: T) {
+	private rafThrottle<T extends (...args: never[]) => void>(fn: T) {
 		let raf = 0
 		let latestArgs: Parameters<T>
 
