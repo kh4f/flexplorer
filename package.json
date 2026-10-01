@@ -7,8 +7,8 @@
 	"repository": "https://github.com/kh4f/flexplorer",
 	"homepage": "https://github.com/kh4f/flexplorer",
 	"bugs": "https://github.com/kh4f/flexplorer/issues",
-	"keywords": ["obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting"],
-	"trustedDependencies": ["obsidian-typings"],
+	"keywords": [ "obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting" ],
+	"trustedDependencies": [ "obsidian-typings" ],
 	"type": "module",
 	"main": "main.js",
 	"scripts": {
@@ -33,5 +33,8 @@
 		"typescript": "^6.0.3",
 		"voicss": "^0.2.0",
 		"voicss-eslint": "^0.3.1"
+	},
+	"overrides": {
+		"moment": "^2.31.0"
 	}
 }
