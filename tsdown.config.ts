@@ -1,9 +1,7 @@
-import { dirname } from 'node:path'
-
 import { defineConfig } from 'tsdown'
 import voicss from 'voicss/vite'
 
-const dir = dirname(import.meta.url)
+const dirUrl = new URL('.', import.meta.url).href
 
 export default defineConfig(({ watch }) => {
 	const isDev = Boolean(watch)
@@ -18,8 +16,8 @@ export default defineConfig(({ watch }) => {
 		sourcemap: isDev,
 		outputOptions: {
 			entryFileNames: 'main.js',
-			sourcemapBaseUrl: dir,
-			sourcemapPathTransform: relSourcePath => `${dir}/${relSourcePath}`,
+			sourcemapBaseUrl: dirUrl,
+			sourcemapPathTransform: relSourcePath => `${dirUrl}/${relSourcePath}`,
 		},
 		define: { 'process.env.NODE_ENV': isDev ? '"development"' : '"production"' },
 		env: { DEV: isDev },
