@@ -18,6 +18,7 @@ export class Patcher {
 		const plugin = this.plugin
 
 		const explorerProto = Object.getPrototypeOf(plugin.getExplorerView()) as FileExplorerView
+		// eslint-disable-next-line @typescript-eslint/unbound-method -- intentional prototype patching
 		const origGetSortedFolderItems = explorerProto.getSortedFolderItems
 
 		explorerProto.getSortedFolderItems = function (folder) {
@@ -34,6 +35,7 @@ export class Patcher {
 		const plugin = this.plugin
 		const log = this.log
 
+		// eslint-disable-next-line @typescript-eslint/unbound-method -- intentional prototype patching
 		const origShowAtMouseEvent = Menu.prototype.showAtMouseEvent
 
 		Menu.prototype.showAtMouseEvent = function (evt) {
