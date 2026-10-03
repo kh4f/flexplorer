@@ -23,9 +23,11 @@ export class OrderManager {
 	private sync(folder: TFolder): void {
 		const folderPath = folder.path
 		const oldSettings = this.plugin.settings.items[folderPath] as FolderSettings | undefined
-		const newChildren = folder.children.map(c => c.name)
 
+		// seed from the currently displayed order, so enabling the plugin for the first time doesn't reorder items
+		const newChildren = this.plugin.getExplorerView().getSortedFolderItems(folder).map(item => item.file.name)
 		const oldChildren = oldSettings?.customOrder ?? []
+
 		let mergedChildren = oldChildren.filter(p => newChildren.includes(p))
 		const addedChildren = newChildren.filter(p => !oldChildren.includes(p))
 		mergedChildren = this.plugin.settings.newItemPlacement === 'top'

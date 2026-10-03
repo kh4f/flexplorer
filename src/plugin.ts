@@ -37,10 +37,12 @@ export default class Flexplorer extends Plugin {
 		this.addSettingTab(new SettingsTab(this.app, this))
 		this.registerVaultEventHandlers()
 		this.patcher.patchExplorerSortMenu()
-		this.orderManager.syncItems()
 
 		this.explorerManager.observeExplorerMount(el => {
 			this.log('Explorer mounted:', el)
+			// must run on explorer mount: `getSortedFolderItems()` doesn't exist until then
+			// must run before patching: `sync()` needs the original `getSortedFolderItems()`
+			this.orderManager.syncItems()
 			this.patcher.patchExplorerSorting()
 			this.sortExplorer()
 			this.dndEngine.attach(el)
