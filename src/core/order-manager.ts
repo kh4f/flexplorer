@@ -20,6 +20,46 @@ export class OrderManager {
 		void this.plugin.saveSettings()
 	}
 
+	private sync(folder: TFolder): void {
+		const folderPath = folder.path
+		const oldSettings = this.plugin.settings.items[folderPath] as FolderSettings | undefined
+		const newChildren = folder.children.map(c => c.name)
+
+		const oldChildren = oldSettings?.customOrder ?? []
+		let mergedChildren = oldChildren.filter(p => newChildren.includes(p))
+		const addedChildren = newChildren.filter(p => !oldChildren.includes(p))
+		mergedChildren = this.plugin.settings.newItemPlacement === 'top'
+			? [...addedChildren, ...mergedChildren]
+			: [...mergedChildren, ...addedChildren]
+
+		this.plugin.settings.items[folderPath] = {
+			...DEFAULT_ITEM_SETTINGS,
+			sortOrder: 'custom',
+			...oldSettings,
+			customOrder: mergedChildren,
+		}
+
+		for (const child of folder.children) {
+			if (child instanceof TFolder) {
+				this.sync(child)
+				continue
+			}
+
+			if (child instanceof TFile) {
+				const prevSettings = this.plugin.settings.items[child.path] as BaseItemSettings | undefined
+				this.plugin.settings.items[child.path] = { ...DEFAULT_ITEM_SETTINGS, ...prevSettings }
+			}
+		}
+	}
+
+	private cleanUpInvalidPaths(): void {
+		for (const path of Object.keys(this.plugin.settings.items)) {
+			if (!this.plugin.app.vault.getAbstractFileByPath(path)) {
+				delete this.plugin.settings.items[path]
+			}
+		}
+	}
+
 	add(item: TAbstractFile): void {
 		const insertPos = this.plugin.settings.newItemPlacement
 		this.log(`Adding new item '${item.path}' at '${insertPos}'`)
@@ -102,6 +142,13 @@ export class OrderManager {
 		this.persistCreateDeleteChange()
 	}
 
+	private persistCreateDeleteChange(): void {
+		if (!this.plugin.settings.persistOrderOnCreateDelete)
+			return this.log(`Order persistence on create/delete is disabled, skipping data.json update`)
+
+		void this.plugin.saveSettings()
+	}
+
 	getSortedItems(folderSettings: FolderSettings, items: FileTreeItem[]): FileTreeItem[] {
 		return items.slice().sort((aItem, bItem) => {
 			const [a, b] = [aItem.file, bItem.file]
@@ -133,46 +180,6 @@ export class OrderManager {
 		})
 	}
 
-	private sync(folder: TFolder): void {
-		const folderPath = folder.path
-		const oldSettings = this.plugin.settings.items[folderPath] as FolderSettings | undefined
-		const newChildren = folder.children.map(c => c.name)
-
-		const oldChildren = oldSettings?.customOrder ?? []
-		let mergedChildren = oldChildren.filter(p => newChildren.includes(p))
-		const addedChildren = newChildren.filter(p => !oldChildren.includes(p))
-		mergedChildren = this.plugin.settings.newItemPlacement === 'top'
-			? [...addedChildren, ...mergedChildren]
-			: [...mergedChildren, ...addedChildren]
-
-		this.plugin.settings.items[folderPath] = {
-			...DEFAULT_ITEM_SETTINGS,
-			sortOrder: 'custom',
-			...oldSettings,
-			customOrder: mergedChildren,
-		}
-
-		for (const child of folder.children) {
-			if (child instanceof TFolder) {
-				this.sync(child)
-				continue
-			}
-
-			if (child instanceof TFile) {
-				const prevSettings = this.plugin.settings.items[child.path] as BaseItemSettings | undefined
-				this.plugin.settings.items[child.path] = { ...DEFAULT_ITEM_SETTINGS, ...prevSettings }
-			}
-		}
-	}
-
-	private cleanUpInvalidPaths(): void {
-		for (const path of Object.keys(this.plugin.settings.items)) {
-			if (!this.plugin.app.vault.getAbstractFileByPath(path)) {
-				delete this.plugin.settings.items[path]
-			}
-		}
-	}
-
 	private compareByName(a: TAbstractFile, b: TAbstractFile): number {
 		return collator.compare(a.name, b.name)
 	}
@@ -186,13 +193,6 @@ export class OrderManager {
 		const aTimestamp = a instanceof TFile ? a.stat[type] : -Infinity
 		const bTimestamp = b instanceof TFile ? b.stat[type] : -Infinity
 		return direction === 'asc' ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
-	}
-
-	private persistCreateDeleteChange(): void {
-		if (!this.plugin.settings.persistOrderOnCreateDelete)
-			return this.log(`Order persistence on create/delete is disabled, skipping data.json update`)
-
-		void this.plugin.saveSettings()
 	}
 
 	private getName(path: string): string {
