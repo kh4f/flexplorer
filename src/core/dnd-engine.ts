@@ -1,4 +1,4 @@
-import { TAbstractFile, TFile, TFolder, Platform } from 'obsidian'
+import { TAbstractFile, TFile, TFolder } from 'obsidian'
 import type { AbstractFileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
 import { initLog } from '@/utils'
@@ -11,10 +11,6 @@ export class DndEngine {
 
 	private explorerEl: HTMLElement | null = null
 	private explorerRect: DOMRect | null = null
-
-	private readonly dragStartEvent = Platform.isDesktop ? 'dragstart' : 'touchstart'
-	private readonly dragOverEvent = Platform.isDesktop ? 'dragover' : 'touchmove'
-	private readonly dropEvent = Platform.isDesktop ? 'drop' : 'touchend'
 
 	private draggedItem: TAbstractFile | null = null
 	private dropSibling: HTMLElement | null = null
@@ -30,20 +26,18 @@ export class DndEngine {
 	private expandTarget: HTMLElement | null = null
 	private expandTimeout = 0
 
-	private readonly mobileDragHandleWidth = 36
-
 	constructor(private readonly plugin: Flexplorer) {}
 
 	attach(explorerEl: HTMLElement): void {
 		if (explorerEl === this.explorerEl) return this.log('Already attached to', explorerEl)
 		this.explorerEl = explorerEl
 
-		explorerEl.addEventListener(this.dragStartEvent, this.onDragStart)
+		explorerEl.addEventListener('dragstart', this.onDragStart)
 		// `dragover` instead of `drag` because `drag` fires on the drag source and stops firing once the source is
 		// scrolled out of view by Chromium autoscroll;
 		// listen on the document so it keeps firing out of the explorer, keeping `lastPointerY` updated for autoscroll
 		// acceleration and letting `onDragOver` detect whether the cursor is still inside the explorer
-		document.addEventListener(this.dragOverEvent, this.onDragOver)
+		document.addEventListener('dragover', this.onDragOver)
 		// Chromium suppresses drag events (including `dragover`) during its autoscroll, so recompute the drop target
 		// from the last known pointer position on the `scroll` event
 		explorerEl.addEventListener('scroll', this.onScroll)
@@ -51,7 +45,7 @@ export class DndEngine {
 		// `preventDefault()`;
 		// listen on the document to detect drops outside the explorer and manually call `onDragEnd()` because `dragend`
 		// doesn't fire when the drag source is scrolled out of view by Chromium autoscroll (same behavior as `drag`)
-		document.addEventListener(this.dropEvent, this.onDrop, { capture: true })
+		document.addEventListener('drop', this.onDrop, { capture: true })
 		// `dragend` fires even when the `drop` is canceled (except for the case above)
 		explorerEl.addEventListener('dragend', this.onDragEnd)
 
@@ -59,11 +53,11 @@ export class DndEngine {
 	}
 
 	detach(): void {
-		document.removeEventListener(this.dragOverEvent, this.onDragOver)
-		document.removeEventListener(this.dropEvent, this.onDrop, { capture: true })
+		document.removeEventListener('dragover', this.onDragOver)
+		document.removeEventListener('drop', this.onDrop, { capture: true })
 
 		if (this.explorerEl) {
-			this.explorerEl.removeEventListener(this.dragStartEvent, this.onDragStart)
+			this.explorerEl.removeEventListener('dragstart', this.onDragStart)
 			this.explorerEl.removeEventListener('scroll', this.onScroll)
 			this.explorerEl.removeEventListener('dragend', this.onDragEnd)
 		}
@@ -71,15 +65,9 @@ export class DndEngine {
 		this.log('Detached from', this.explorerEl)
 	}
 
-	private readonly onDragStart = (event: DragEvent | TouchEvent): void => {
+	private readonly onDragStart = (event: DragEvent): void => {
 		const closestTreeItem = (event.target as HTMLElement).closest<HTMLElement>('.tree-item')
 		if (!closestTreeItem) return this.log('Drag started outside a tree item, ignoring')
-
-		if (Platform.isMobile) {
-			const distToRight = closestTreeItem.getBoundingClientRect().right - this.mobileDragHandleWidth
-			const pointerX = event instanceof TouchEvent ? event.touches[0].clientX : event.clientX
-			if (pointerX < distToRight) return this.log('Drag started outside the handle area, ignoring')
-		}
 
 		this.draggedItem = this.plugin.getExplorerView().files.get(closestTreeItem) ?? null
 		if (!this.draggedItem) return this.log('Drag started on an unknown tree item, ignoring')
@@ -90,19 +78,14 @@ export class DndEngine {
 		this.log(`Started dragging '${this.draggedItem.path}'`)
 	}
 
-	private readonly onDragOver = (event: DragEvent | TouchEvent): void => {
+	private readonly onDragOver = (event: DragEvent): void => {
 		if (!this.draggedItem) return
 
 		// prevent Obsidian from unexpectedly expanding the collapsed dragged folder and the collapsed folder that
 		// ends up right after the dropped item
 		this.plugin.getExplorerView().lastDropTargetEl = null
-		// prevent swiping the explorer horizontally on mobile
-		if (Platform.isMobile) event.preventDefault()
 
-		this.pointer = {
-			x: event instanceof TouchEvent ? event.touches[0].clientX : event.clientX,
-			y: event instanceof TouchEvent ? event.touches[0].clientY : event.clientY,
-		}
+		this.pointer = { x: event.clientX, y: event.clientY }
 
 		this.startAutoscroll()
 
@@ -126,7 +109,7 @@ export class DndEngine {
 		this.updateDragState()
 	}
 
-	private readonly onDrop = (event: DragEvent | TouchEvent): void => {
+	private readonly onDrop = (event: DragEvent): void => {
 		if (!this.draggedItem) return
 		this.log(`Dropped '${this.draggedItem.path}'`)
 
@@ -159,8 +142,6 @@ export class DndEngine {
 			const newPath = this.resolveNewPath(this.draggedItem, dropFolderPath)
 			this.moveItem(this.draggedItem, newPath, dropFolderPath, dropSiblingPath, this.insertSide)
 		}
-
-		if (Platform.isMobile) this.onDragEnd()
 	}
 
 	private readonly onDragEnd = (): void => {
