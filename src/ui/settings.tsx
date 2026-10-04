@@ -22,20 +22,6 @@ export class SettingsTab extends PluginSettingTab {
 				},
 			},
 			{
-				name: 'Persist order on create/delete',
-				desc: createFragment(frag => {
-					frag.append('Update data.json immediately when files are created or deleted. ' +
-						'Disable this if your sync service, especially Obsidian Sync, causes sync conflicts ' +
-						'when merging data.json across devices.')
-					frag.createEl('br')
-					frag.createEl('a', {
-						text: '(Issue #120)',
-						href: 'https://github.com/kh4f/flexplorer/issues/120#issuecomment-3782479650',
-					})
-				}),
-				control: { type: 'toggle', key: 'persistOrderOnCreateDelete' },
-			},
-			{
 				name: 'Hide patterns',
 				desc: createFragment(frag => {
 					frag.append('Patterns matching items to hide, one per line.')
@@ -80,6 +66,20 @@ export class SettingsTab extends PluginSettingTab {
 							this.plugin.explorerManager.syncIndicators()
 						})
 				}),
+			},
+			{
+				name: 'Persist order on create/delete',
+				desc: createFragment(frag => {
+					frag.append('Update data.json immediately when files are created or deleted. ' +
+						'Disable this if your sync service, especially Obsidian Sync, causes sync conflicts ' +
+						'when merging data.json across devices.')
+					frag.createEl('br')
+					frag.createEl('a', {
+						text: '(Issue #120)',
+						href: 'https://github.com/kh4f/flexplorer/issues/120#issuecomment-3782479650',
+					})
+				}),
+				control: { type: 'toggle', key: 'persistOrderOnCreateDelete' },
 			},
 			{
 				name: 'Debug mode',
