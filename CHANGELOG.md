@@ -1,5 +1,30 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.0.0  `
+
+### &emsp; 📢 BREAKING CHANGES
+- **Obsidian 1.13.0+ required**: the plugin now uses the declarative settings API, available only in Obsidian 1.13.0 and later. [🡥](https://github.com/kh4f/flexplorer/commit/18ffcae)
+- **Settings format migration**: pin state is now stored solely in `items[path].isPinned` (the duplicated `pinnedFiles` array is gone), and sort order values use the new `*Asc`/`*Desc` suffixes (`byName` → `byNameAsc`, etc.). Existing settings migrate automatically on load. [🡥](https://github.com/kh4f/flexplorer/commit/2e6666f)
+
+### &emsp; ✨ Features
+- **Pattern-based hiding**: hide items matching basic gitignore-style globs (`any-1?3-*.md`, `*/nested.*`, `/only-root.md`). Pattern-hidden items are revealed via `Show hidden` together with manually hidden ones. [🡥](https://github.com/kh4f/flexplorer/commit/7ff5f5d) [#191](https://github.com/kh4f/flexplorer/issues/191)
+- **Smarter copying**: a copied item now keeps the original's settings, and is placed right after the source. [🡥](https://github.com/kh4f/flexplorer/commit/120c422) [🡥](https://github.com/kh4f/flexplorer/commit/5d09ee8) [#172](https://github.com/kh4f/flexplorer/issues/172)
+- **Stable time sorting across devices**: created/modified sorting now uses timestamps tracked by the plugin instead of the OS file stats, so the order no longer changes after syncing between devices. [🡥](https://github.com/kh4f/flexplorer/commit/f492354) [#169](https://github.com/kh4f/flexplorer/issues/169)
+- **Native mobile dragging**: dragging on mobile now uses the same drag events as desktop — long-press an item and drag, no more dedicated drag handle. [🡥](https://github.com/kh4f/flexplorer/commit/9fa475c) [#186](https://github.com/kh4f/flexplorer/issues/186) [#174](https://github.com/kh4f/flexplorer/issues/174) [#184](https://github.com/kh4f/flexplorer/issues/184)
+- **Settings search**: all settings are now indexed by Obsidian's settings search. [🡥](https://github.com/kh4f/flexplorer/commit/18ffcae)
+
+### &emsp; 🩹 Fixes
+- **Fixed first-enable reshuffle**: the initial custom order is now seeded from the currently displayed sort instead of Obsidian's internal child order. [🡥](https://github.com/kh4f/flexplorer/commit/bae268b) [#180](https://github.com/kh4f/flexplorer/issues/180) [#178](https://github.com/kh4f/flexplorer/issues/178)
+- **Fixed drops after long drags**: notes dropped after a prolonged drag are now registered reliably, and autoscroll no longer gets stuck mid-drag. [🡥](https://github.com/kh4f/flexplorer/commit/fcf0ef6) [#175](https://github.com/kh4f/flexplorer/issues/175) [#181](https://github.com/kh4f/flexplorer/issues/181)
+- **Fixed enabling from Settings**: the plugin now works when enabled from the Settings window in Obsidian 1.13.0+. [🡥](https://github.com/kh4f/flexplorer/commit/489f287)
+
+### &emsp; ⚡ Performance
+- **Smoother dragging**: the drag-and-drop engine was rewritten from scratch, greatly reducing lag in large vaults and on mobile. [🡥](https://github.com/kh4f/flexplorer/commit/489f287) [#185](https://github.com/kh4f/flexplorer/issues/185) [#187](https://github.com/kh4f/flexplorer/issues/187)
+
+### &emsp; 🎨 Style
+- **Improved drop indicator**: the drop line is now thicker and layered above the selected item's outline. [🡥](https://github.com/kh4f/flexplorer/commit/489f287) [#186](https://github.com/kh4f/flexplorer/issues/186)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/4.0.5...5.0.0) &ensp;•&ensp; Oct 4, 2026
 
 ## &ensp; [` 📦 4.0.5  `](https://github.com/kh4f/flexplorer/compare/4.0.4...4.0.5)
 
