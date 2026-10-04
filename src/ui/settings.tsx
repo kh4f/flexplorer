@@ -47,7 +47,7 @@ export class SettingsTab extends PluginSettingTab {
 						})
 					})
 					frag.append('Both pattern- and manually-hidden items can be revealed via "Show hidden" ' +
-						`in the explorer's sort menu.`)
+						`in the root folder's sort menu.`)
 				}),
 				// `render` instead of `control`: a multi-line textarea needs custom wiring
 				render: setting => void setting.addTextArea(ta => {
