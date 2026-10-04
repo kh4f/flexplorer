@@ -50,7 +50,13 @@ export class OrderManager {
 
 			if (child instanceof TFile) {
 				const prevSettings = this.plugin.settings.items[child.path] as BaseItemSettings | undefined
-				this.plugin.settings.items[child.path] = { ...DEFAULT_ITEM_SETTINGS, ...prevSettings }
+				this.plugin.settings.items[child.path] = {
+					...DEFAULT_ITEM_SETTINGS,
+					...prevSettings,
+					// fall back to the OS stats for items that predate the plugin's own tracking
+					ctime: prevSettings?.ctime ?? child.stat.ctime,
+					mtime: prevSettings?.mtime ?? child.stat.mtime,
+				}
 			}
 		}
 	}
@@ -82,6 +88,8 @@ export class OrderManager {
 			items[item.path] = {
 				...DEFAULT_ITEM_SETTINGS,
 				...(isFolder ? { customOrder: [], sortOrder: 'custom' } : {}),
+				ctime: Date.now(),
+				mtime: Date.now(),
 			}
 		}
 
@@ -220,8 +228,8 @@ export class OrderManager {
 		type: 'ctime' | 'mtime',
 		direction: 'asc' | 'desc',
 	): number {
-		const aTimestamp = a instanceof TFile ? a.stat[type] : -Infinity
-		const bTimestamp = b instanceof TFile ? b.stat[type] : -Infinity
+		const aTimestamp = a instanceof TFile ? this.plugin.settings.items[a.path][type] ?? -Infinity : -Infinity
+		const bTimestamp = b instanceof TFile ? this.plugin.settings.items[b.path][type] ?? -Infinity : -Infinity
 		return direction === 'asc' ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
 	}
 

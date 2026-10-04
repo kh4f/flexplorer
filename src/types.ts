@@ -10,6 +10,9 @@ export type ItemSettings = BaseItemSettings | FolderSettings
 export interface BaseItemSettings {
 	isPinned: boolean
 	isHidden: boolean
+	// plugin-tracked timestamps, stable across devices unlike the OS file stats
+	ctime?: number
+	mtime?: number
 }
 export interface FolderSettings extends BaseItemSettings {
 	customOrder: string[]

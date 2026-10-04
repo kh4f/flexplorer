@@ -82,6 +82,9 @@ export default class Flexplorer extends Plugin {
 			this.orderManager.remove(item.path)
 		}))
 		this.registerEvent(this.app.vault.on('modify', item => {
+			const itemSettings = this.settings.items[item.path]
+			itemSettings.mtime = Date.now()
+
 			const parentPath = item.parent!.path
 			const folderSettings = this.settings.items[parentPath] as FolderSettings
 			if (folderSettings.sortOrder.startsWith('byModifiedTime')) {
