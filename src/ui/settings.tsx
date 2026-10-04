@@ -26,7 +26,8 @@ export class SettingsTab extends PluginSettingTab {
 				desc: createFragment(frag => {
 					frag.append('Update data.json immediately when files are created or deleted. ' +
 						'Disable this if your sync service, especially Obsidian Sync, causes sync conflicts ' +
-						'when merging data.json across devices. ')
+						'when merging data.json across devices.')
+					frag.createEl('br')
 					frag.createEl('a', {
 						text: '(Issue #120)',
 						href: 'https://github.com/kh4f/flexplorer/issues/120#issuecomment-3782479650',
