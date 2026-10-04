@@ -1,6 +1,7 @@
 export interface Settings {
 	items: Record<string, ItemSettings>
 	showHidden: boolean
+	hidePatterns: string[]
 	newItemPlacement: 'top' | 'bottom'
 	persistOrderOnCreateDelete: boolean
 	debugMode: boolean

@@ -35,6 +35,52 @@ export class SettingsTab extends PluginSettingTab {
 				control: { type: 'toggle', key: 'persistOrderOnCreateDelete' },
 			},
 			{
+				name: 'Hide patterns',
+				desc: createFragment(frag => {
+					frag.append('Patterns matching items to hide, one per line.')
+					frag.createEl('ul', undefined, list => {
+						list.createEl('li', undefined, li => {
+							li.createEl('code', { text: '*' })
+							li.append(' — zero or more characters, except ')
+							li.createEl('code', { text: '/' })
+						})
+						list.createEl('li', undefined, li => {
+							li.createEl('code', { text: '**' })
+							li.append(' — zero or more characters, including ')
+							li.createEl('code', { text: '/' })
+						})
+						list.createEl('li', undefined, li => {
+							li.createEl('code', { text: '?' })
+							li.append(' — a single character, except ')
+							li.createEl('code', { text: '/' })
+						})
+						list.createEl('li', undefined, li => {
+							li.createEl('code', { text: '/pattern' })
+							li.append(' — match from the root folder only')
+						})
+					})
+					frag.append('Both pattern- and manually-hidden items can be revealed via "Show hidden" ' +
+						`in the explorer's sort menu.`)
+				}),
+				// `render` instead of `control`: a multi-line textarea needs custom wiring
+				render: setting => void setting.addTextArea(ta => {
+					ta.inputEl.rows = 7
+					ta.inputEl.cols = 30
+					return ta
+						.setPlaceholder('any-1?3-*.md\n' +
+							'/only-root.md\n' +
+							'*/nested.*\n' +
+							'deep/**/nested.png')
+						.setValue(this.plugin.settings.hidePatterns.join('\n'))
+						.onChange(value => {
+							this.plugin.settings.hidePatterns = value.split('\n')
+							this.plugin.hideManager.syncRegexes()
+							void this.plugin.saveSettings()
+							this.plugin.explorerManager.syncIndicators()
+						})
+				}),
+			},
+			{
 				name: 'Debug mode',
 				desc: 'Show debug logs in the DevTools console',
 				// `render` instead of `control`: this toggle has a side effect (logger level)

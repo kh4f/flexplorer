@@ -7,7 +7,11 @@ import type { ItemSettings } from '@/types'
 
 const roots = new WeakMap<HTMLElement, ReturnType<typeof createRoot>>()
 
-export function mountIndicator(item: AbstractFileTreeItem<TAbstractFile>, itemSettings: ItemSettings) {
+export function mountIndicator(
+	item: AbstractFileTreeItem<TAbstractFile>,
+	itemSettings: ItemSettings,
+	isPatternHidden: boolean,
+) {
 	const indicatorEl = item.coverEl.querySelector<HTMLElement>('.fp-indicator')
 		?? item.coverEl.createDiv({ cls: 'fp-indicator' })
 
@@ -18,7 +22,7 @@ export function mountIndicator(item: AbstractFileTreeItem<TAbstractFile>, itemSe
 	}
 	root.render(<Indicator itemSettings={itemSettings}/>)
 
-	item.el.toggleClass('fp-hidden', itemSettings.isHidden)
+	item.el.toggleClass('fp-hidden', itemSettings.isHidden || isPatternHidden)
 }
 
 function Indicator({ itemSettings }: { itemSettings: ItemSettings }) {

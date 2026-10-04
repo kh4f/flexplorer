@@ -3,6 +3,7 @@ import type { FileExplorerView } from 'obsidian-typings'
 
 import { DndEngine } from '@/core/dnd-engine'
 import { ExplorerManager } from '@/core/explorer-manager'
+import { HideManager } from '@/core/hide-manager'
 import { OrderManager } from '@/core/order-manager'
 import { Patcher } from '@/core/patcher'
 import { populateFileMenu } from '@/ui/menu'
@@ -13,6 +14,7 @@ import type { FolderSettings, Settings, SortOrder } from '@/types'
 const DEFAULT_SETTINGS: Settings = {
 	items: {},
 	showHidden: false,
+	hidePatterns: [],
 	newItemPlacement: 'top',
 	persistOrderOnCreateDelete: true,
 	debugMode: !!process.env.DEV,
@@ -24,6 +26,7 @@ export default class Flexplorer extends Plugin {
 
 	readonly dndEngine = new DndEngine(this)
 	readonly orderManager = new OrderManager(this)
+	readonly hideManager = new HideManager(this)
 	readonly explorerManager = new ExplorerManager(this)
 	readonly patcher = new Patcher(this)
 
@@ -72,10 +75,12 @@ export default class Flexplorer extends Plugin {
 		this.registerEvent(this.app.vault.on('create', item => {
 			this.log(`Item created: ${item.path}`)
 			this.orderManager.add(item)
+			this.explorerManager.syncIndicators()
 		}))
 		this.registerEvent(this.app.vault.on('rename', (item, oldPath) => {
 			this.log(`Item renamed: ${oldPath} -> ${item.path}`)
 			this.orderManager.move(oldPath, item.path)
+			this.explorerManager.syncIndicators()
 		}))
 		this.registerEvent(this.app.vault.on('delete', item => {
 			this.log(`Item deleted: ${item.path}`)
@@ -134,6 +139,7 @@ export default class Flexplorer extends Plugin {
 	private syncRuntimeSettings(): void {
 		logger.level = this.settings.debugMode ? 'debug' : 'silent'
 		document.body.toggleClass('fp-show-hidden', this.settings.showHidden)
+		this.hideManager.syncRegexes()
 	}
 
 	async saveSettings(): Promise<void> {

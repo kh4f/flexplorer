@@ -35,7 +35,11 @@ export class ExplorerManager {
 
 	syncIndicators(): void {
 		Object.values(this.plugin.getExplorerView().fileItems)
-			.forEach(item => mountIndicator(item, this.plugin.settings.items[item.file.path]))
+			.forEach(item => mountIndicator(
+				item,
+				this.plugin.settings.items[item.file.path],
+				this.plugin.hideManager.isHidden(item.file.path),
+			))
 		this.log('Indicators synced')
 	}
 
