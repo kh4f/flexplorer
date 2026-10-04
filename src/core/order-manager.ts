@@ -10,7 +10,7 @@ const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: tr
 
 export class OrderManager {
 	private readonly log = initLog('ORDER MANAGER', '#ff5000')
-	private readonly pendingCopies = new Map<string, ItemSettings>()
+	private readonly pendingCopies = new Map<string, { settings: ItemSettings, sourceName?: string }>()
 
 	constructor(private readonly plugin: Flexplorer) {}
 
@@ -82,7 +82,7 @@ export class OrderManager {
 		const staged = this.pendingCopies.get(item.path)
 		if (staged) {
 			this.pendingCopies.delete(item.path)
-			items[item.path] = staged
+			items[item.path] = staged.settings
 			this.log(`Restored staged settings for copied item '${item.path}'`)
 		} else {
 			items[item.path] = {
@@ -96,8 +96,16 @@ export class OrderManager {
 		// a copied child is already listed in the restored `customOrder` of its parent, so only
 		// genuinely new items get appended, otherwise duplicates would shadow the restored order
 		if (!parentItem.customOrder.includes(item.name)) {
-			if (insertPos === 'top') parentItem.customOrder.unshift(item.name)
-			else parentItem.customOrder.push(item.name)
+			// a copy created next to its source is inserted right after it
+			const sourceName = staged?.sourceName
+			if (sourceName) {
+				const sourceIndex = parentItem.customOrder.indexOf(sourceName)
+				parentItem.customOrder.splice(sourceIndex + 1, 0, item.name)
+			} else if (insertPos === 'top') {
+				parentItem.customOrder.unshift(item.name)
+			} else {
+				parentItem.customOrder.push(item.name)
+			}
 		}
 
 		this.persistCreateDeleteChange()
@@ -181,7 +189,10 @@ export class OrderManager {
 		for (const [path, settings] of Object.entries(items)) {
 			if (path !== sourcePath && !path.startsWith(sourcePrefix)) continue
 			const copyItemPath = path === sourcePath ? copyPath : copyPrefix + path.slice(sourcePrefix.length)
-			this.pendingCopies.set(copyItemPath, structuredClone(settings))
+			this.pendingCopies.set(copyItemPath, {
+				settings: structuredClone(settings),
+				sourceName: path === sourcePath ? this.getName(sourcePath) : undefined,
+			})
 		}
 
 		this.log(`Staged copy state from '${sourcePath}' to '${copyPath}'`)
