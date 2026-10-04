@@ -36,6 +36,7 @@ export default class Flexplorer extends Plugin {
 	private init(): void {
 		this.addSettingTab(new SettingsTab(this.app, this))
 		this.registerVaultEventHandlers()
+		this.patcher.patchVaultCopy()
 		this.patcher.patchExplorerSortMenu()
 
 		this.explorerManager.observeExplorerMount(el => {

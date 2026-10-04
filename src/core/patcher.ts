@@ -1,4 +1,4 @@
-import { Menu } from 'obsidian'
+import { Menu, Vault } from 'obsidian'
 import type { FileExplorerView } from 'obsidian-typings'
 
 import { populateSortMenu } from '@/ui/menu'
@@ -11,8 +11,29 @@ export class Patcher {
 
 	private unpatchExplorerSorting: (() => void) | null = null
 	private unpatchExplorerSortMenu: (() => void) | null = null
+	private unpatchVaultCopy: (() => void) | null = null
 
 	constructor(private readonly plugin: Flexplorer) {}
+
+	patchVaultCopy(): void {
+		const plugin = this.plugin
+		const log = this.log
+
+		const vaultProto = Vault.prototype as { copy: Vault['copy'] }
+		const origCopy = vaultProto.copy
+
+		vaultProto.copy = async function (file, newPath) {
+			log(`Item copied: '${file.path}' -> '${newPath}'`)
+			plugin.orderManager.stageCopyState(file.path, newPath)
+			const copy = await origCopy.call(this, file, newPath)
+			// the copy's DOM items exist only after all its `create` events are processed
+			plugin.explorerManager.syncIndicators()
+			return copy
+		}
+
+		this.unpatchVaultCopy = () => vaultProto.copy = origCopy
+		this.log('Vault copy patched')
+	}
 
 	patchExplorerSorting(): void {
 		const plugin = this.plugin
@@ -68,6 +89,7 @@ export class Patcher {
 	unpatch(): void {
 		this.unpatchExplorerSorting?.()
 		this.unpatchExplorerSortMenu?.()
+		this.unpatchVaultCopy?.()
 		this.log('Patches removed')
 	}
 }

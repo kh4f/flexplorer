@@ -3,13 +3,14 @@ import type { FileTreeItem } from 'obsidian-typings'
 
 import { initLog } from '@/utils'
 import type Flexplorer from '@/plugin'
-import type { BaseItemSettings, FolderSettings } from '@/types'
+import type { BaseItemSettings, FolderSettings, ItemSettings } from '@/types'
 
 const DEFAULT_ITEM_SETTINGS: BaseItemSettings = { isPinned: false, isHidden: false }
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 
 export class OrderManager {
 	private readonly log = initLog('ORDER MANAGER', '#ff5000')
+	private readonly pendingCopies = new Map<string, ItemSettings>()
 
 	constructor(private readonly plugin: Flexplorer) {}
 
@@ -70,13 +71,26 @@ export class OrderManager {
 		const isFolder = item instanceof TFolder
 		const parentItem = items[item.parent!.path] as FolderSettings
 
-		items[item.path] = {
-			...DEFAULT_ITEM_SETTINGS,
-			...(isFolder ? { customOrder: [], sortOrder: 'custom' } : {}),
+		// a copied item arrives as a burst of `create` events; if its state was staged by the
+		// `vault.copy` patch, restore it instead of the defaults
+		const staged = this.pendingCopies.get(item.path)
+		if (staged) {
+			this.pendingCopies.delete(item.path)
+			items[item.path] = staged
+			this.log(`Restored staged settings for copied item '${item.path}'`)
+		} else {
+			items[item.path] = {
+				...DEFAULT_ITEM_SETTINGS,
+				...(isFolder ? { customOrder: [], sortOrder: 'custom' } : {}),
+			}
 		}
 
-		if (insertPos === 'top') parentItem.customOrder.unshift(item.name)
-		else parentItem.customOrder.push(item.name)
+		// a copied child is already listed in the restored `customOrder` of its parent, so only
+		// genuinely new items get appended, otherwise duplicates would shadow the restored order
+		if (!parentItem.customOrder.includes(item.name)) {
+			if (insertPos === 'top') parentItem.customOrder.unshift(item.name)
+			else parentItem.customOrder.push(item.name)
+		}
 
 		this.persistCreateDeleteChange()
 	}
@@ -149,6 +163,20 @@ export class OrderManager {
 			return this.log(`Order persistence on create/delete is disabled, skipping data.json update`)
 
 		void this.plugin.saveSettings()
+	}
+
+	stageCopyState(sourcePath: string, copyPath: string): void {
+		const items = this.plugin.settings.items
+		const sourcePrefix = sourcePath === '/' ? '' : sourcePath + '/'
+		const copyPrefix = copyPath === '/' ? '' : copyPath + '/'
+
+		for (const [path, settings] of Object.entries(items)) {
+			if (path !== sourcePath && !path.startsWith(sourcePrefix)) continue
+			const copyItemPath = path === sourcePath ? copyPath : copyPrefix + path.slice(sourcePrefix.length)
+			this.pendingCopies.set(copyItemPath, structuredClone(settings))
+		}
+
+		this.log(`Staged copy state from '${sourcePath}' to '${copyPath}'`)
 	}
 
 	getSortedItems(folderSettings: FolderSettings, items: FileTreeItem[]): FileTreeItem[] {
