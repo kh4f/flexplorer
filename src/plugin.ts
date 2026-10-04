@@ -73,17 +73,17 @@ export default class Flexplorer extends Plugin {
 
 	private registerVaultEventHandlers(): void {
 		this.registerEvent(this.app.vault.on('create', item => {
-			this.log(`Item created: ${item.path}`)
+			this.log(`Item created: '${item.path}'`)
 			this.orderManager.add(item)
 			this.explorerManager.syncIndicators()
 		}))
 		this.registerEvent(this.app.vault.on('rename', (item, oldPath) => {
-			this.log(`Item renamed: ${oldPath} -> ${item.path}`)
+			this.log(`Item renamed: '${oldPath}' -> '${item.path}'`)
 			this.orderManager.move(oldPath, item.path)
 			this.explorerManager.syncIndicators()
 		}))
 		this.registerEvent(this.app.vault.on('delete', item => {
-			this.log(`Item deleted: ${item.path}`)
+			this.log(`Item deleted: '${item.path}'`)
 			this.orderManager.remove(item.path)
 		}))
 		this.registerEvent(this.app.vault.on('modify', item => {
