@@ -21,11 +21,12 @@
 	<img alt="demo" src="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/demo.gif">
 </div>
 
-## 🔥 Features
-- **Per-folder sorting:** each folder can use its own sorting mode
-- **Custom order mode:** manually arrange items via drag-and-drop
-- **Pinning & hiding:** keep important files at the top, hide irrelevant ones
-- **Mobile support:** all features work on mobile as well
+## ✨ Features
+- **Custom sorting:** manually arrange items via drag-and-drop
+- **Per-folder sorting:** use a different sorting mode for each folder
+- **Pinning:** keep important files at the top
+- **Hiding:** hide irrelevant files manually or by pattern
+- **Mobile support:** works the same way on mobile
 
 ## 📥 Install
 - **Via the Obsidian Community**: https://community.obsidian.md/plugins/flexplorer
@@ -35,9 +36,7 @@
 ## 🕹️ Usage
 ![guide](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/guide.png)
 
-- To drag items on touch devices, hold them by the right edge
-
 ## 💖 Credits
 - **Inspiration**: [Obsidian Bartender](https://github.com/Mara-Li/obsidian-bartender), [Custom File Explorer sorting](https://github.com/SebastianMC/obsidian-custom-sort), [File Explorer++](https://github.com/kelszo/obsidian-file-explorer-plus)
 - **Code contributions**: [@Mara-Li](https://github.com/Mara-Li), [@michalgregor](https://github.com/michalgregor), [@MichalNawrocik](https://github.com/MichalNawrocik)
-- **Bug reports & feature requests**: [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer)
+- **Bug reports & feature requests**: [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer), [@73mtq](https://github.com/73mtq), [@toya-co](https://github.com/toya-co), [@Succubyte](https://github.com/Succubyte), [@RainyGrass](https://github.com/RainyGrass), [@akshatg](https://github.com/akshatg)
