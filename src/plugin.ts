@@ -130,7 +130,9 @@ export default class Flexplorer extends Plugin {
 		for (const itemSettings of Object.values(this.settings.items)) {
 			if (!('sortOrder' in itemSettings)) continue
 			const folderSettings = itemSettings
-			folderSettings.sortOrder = sortOrderMap[folderSettings.sortOrder]
+			if (folderSettings.sortOrder in sortOrderMap) {
+				folderSettings.sortOrder = sortOrderMap[folderSettings.sortOrder]
+			}
 		}
 
 		this.log('Migrated settings from v4 to v5')
