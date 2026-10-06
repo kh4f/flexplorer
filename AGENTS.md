@@ -19,4 +19,4 @@
 - `bun lint` — linting
 
 ## Guidelines
-- Run `bun lint` after making changes
+- Run linting and build after making changes
