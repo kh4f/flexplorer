@@ -131,6 +131,14 @@ export class DndEngine {
 		const isDraggedSelected = selectedItems.some(item => item.file === this.draggedItem)
 
 		if (isDraggedSelected) {
+			const pinnedStates = new Set(selectedItems.map(item => this.plugin.settings.items[item.file.path].isPinned))
+			if (pinnedStates.size > 1) return this.log('Selection mixes pinned and unpinned items, skipping the move')
+
+			if (pinnedStates.has(true)) {
+				const parentPaths = new Set(selectedItems.map(item => item.file.parent?.path))
+				if (parentPaths.size > 1) return this.log('Pinned selection spans multiple folders, skipping the move')
+			}
+
 			this.log('Moving selected items:', selectedItems)
 			selectedItems.forEach((item, idx) => {
 				const insertSide = idx === 0 ? this.insertSide : 'after'
