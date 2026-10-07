@@ -158,6 +158,7 @@ export class DndEngine {
 
 		this.updateDragState.cancel()
 		this.stopAutoscroll()
+		this.clearPendingExpand()
 
 		this.clearDropIndicators()
 		this.draggedItem = null
