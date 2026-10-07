@@ -235,10 +235,18 @@ export class DndEngine {
 		let shouldClearExpand = true
 
 		if (closestFolderTitle && !isDraggedPinned) {
+			const folderEl = closestFolderTitle.parentElement!
+			const folderPath = this.resolveItemPath(folderEl)
+			const draggedPath = this.draggedItem!.path
+			// a folder can't be dropped into itself or into one of its descendants
+			const isDraggedFolder = folderPath === draggedPath
+				|| (folderPath?.startsWith(`${draggedPath}/`) ?? false)
 			const titleRect = closestFolderTitle.getBoundingClientRect()
-			if (this.pointer.y > titleRect.top + 5 && this.pointer.y < titleRect.bottom - 5) {
+			const isTitleCenterHovered = this.pointer.y > titleRect.top + 5 && this.pointer.y < titleRect.bottom - 5
+
+			if (isDraggedFolder) this.sparseLog('Hovering over the dragged folder or its descendant, ignoring it')
+			else if (isTitleCenterHovered) {
 				this.sparseLog(`Hovering over folder title center, treating it as drop folder`)
-				const folderEl = closestFolderTitle.parentElement!
 				this.dropFolder = folderEl
 				this.dropSibling = null
 
