@@ -1,5 +1,15 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.0.1  `
+
+### &emsp; 🩹 Fixes
+- **Fixed v5 sort order migration**: `sortOrder` values saved by v5 are no longer mangled by the v4→v5 migration on load. [🡥](https://github.com/kh4f/flexplorer/commit/e3892a2) [#192](https://github.com/kh4f/flexplorer/issues/192)
+- **Safer multi-selection drops**: drops are now skipped when the selection mixes pinned and unpinned items, or when a fully pinned selection spans multiple folders. [🡥](https://github.com/kh4f/flexplorer/commit/2eefa02)
+- **No drops into the dragged folder**: hovering the title of the dragged folder itself, or of any folder inside it, during a drag no longer marks it as a drop target, so a folder can't be moved into its own descendant. [🡥](https://github.com/kh4f/flexplorer/commit/09e65dd)
+- **No surprise folder expansion**: collapsed folders no longer expand seconds after a drop — the pending expand timer is now canceled when the drag ends. [🡥](https://github.com/kh4f/flexplorer/commit/801e74d)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/5.0.0...5.0.1) &ensp;•&ensp; Oct 7, 2026
+
 ## &ensp; ` 🏷️ 5.0.0  `
 
 ### &emsp; 📢 BREAKING CHANGES
