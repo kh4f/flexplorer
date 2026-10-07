@@ -236,11 +236,9 @@ export class DndEngine {
 
 		if (closestFolderTitle && !isDraggedPinned) {
 			const folderEl = closestFolderTitle.parentElement!
-			const folderPath = this.resolveItemPath(folderEl)
-			const draggedPath = this.draggedItem!.path
 			// a folder can't be dropped into itself or into one of its descendants
-			const isDraggedFolder = folderPath === draggedPath
-				|| (folderPath?.startsWith(`${draggedPath}/`) ?? false)
+			const draggedEl = this.plugin.getExplorerView().fileItems[this.draggedItem!.path].el
+			const isDraggedFolder = draggedEl.contains(folderEl)
 			const titleRect = closestFolderTitle.getBoundingClientRect()
 			const isTitleCenterHovered = this.pointer.y > titleRect.top + 5 && this.pointer.y < titleRect.bottom - 5
 
