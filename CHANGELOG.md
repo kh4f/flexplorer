@@ -1,5 +1,14 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.0.2  `
+
+### &emsp; 🩹 Fixes
+- **Drags starting at a row's top edge no longer cancel instantly**: the per-level layout offset is no longer applied during `dragstart` — Chromium cancels a drag when the source row moves out from under the cursor there. Drops at the end of nested folders keep working through a virtual hit zone instead of real padding. [🡥](https://github.com/kh4f/flexplorer/commit/be46d70)
+- **Cleanup after long autoscrolled drags**: when the source row leaves the DOM mid-drag, a drop now always clears the drop indicator and restores explorer scrolling instead of leaving both stuck. [🡥](https://github.com/kh4f/flexplorer/commit/ad0ab52)
+- **Console no longer floods after dragging outside the explorer**: leaving the explorer logs a single message instead of dumping dozens of repeated lines once the cursor comes back. [🡥](https://github.com/kh4f/flexplorer/commit/a3064bc)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/5.0.1...5.0.2) &ensp;•&ensp; Oct 9, 2026
+
 ## &ensp; ` 🏷️ 5.0.1  `
 
 ### &emsp; 🩹 Fixes
