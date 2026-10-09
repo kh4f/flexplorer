@@ -90,12 +90,12 @@ export class DndEngine {
 
 		this.startAutoscroll()
 
-		const rect = this.explorerRect!
-		const isInsideExplorer = this.pointer.x >= rect.left && this.pointer.x <= rect.right
-			&& this.pointer.y >= rect.top && this.pointer.y <= rect.bottom
-		if (isInsideExplorer) this.updateDragState()
+		if (this.isPointerInsideExplorer()) this.updateDragState()
 		else {
-			this.sparseLog('Cursor left the explorer, clearing drop indicators')
+			// log only the transition: while the cursor stays outside this branch runs on every `dragover`,
+			// and `sparseLog` would buffer each copy until the next `updateDragState()` flushes it
+			if (this.dropSibling || this.dropFolder)
+				this.log('Cursor left the explorer, clearing drop indicators')
 			this.updateDragState.cancel()
 			this.clearDropIndicators()
 			this.dropSibling = null
@@ -104,10 +104,18 @@ export class DndEngine {
 	}
 
 	private readonly onScroll = (): void => {
-		if (!this.draggedItem) return
+		// resolving drop targets from a scroll while the cursor is outside would re-apply indicators that
+		// `onDragOver` just cleared (and buffer sparse logs until the cursor comes back)
+		if (!this.draggedItem || !this.isPointerInsideExplorer()) return
 
 		this.sparseLog('Scrolled during dragging, updating drag state')
 		this.updateDragState()
+	}
+
+	private isPointerInsideExplorer(): boolean {
+		const rect = this.explorerRect!
+		return this.pointer.x >= rect.left && this.pointer.x <= rect.right
+			&& this.pointer.y >= rect.top && this.pointer.y <= rect.bottom
 	}
 
 	private readonly onDrop = (event: DragEvent): void => {
