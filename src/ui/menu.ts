@@ -31,7 +31,7 @@ export function populateFileMenu(menu: Menu, file: TAbstractFile, plugin: Flexpl
 		.setIcon(fileSettings.isPinned ? 'pin-off' : 'pin')
 		.onClick(() => {
 			fileSettings.isPinned = !fileSettings.isPinned
-			plugin.log(`Toggling pinned state for '${file.path}' to ${fileSettings.isPinned}`)
+			plugin.log(`Toggled pinned state for '${file.path}' to ${fileSettings.isPinned}`)
 			if (fileSettings.isPinned) plugin.orderManager.move(file.path, file.path)
 			void plugin.saveSettings()
 			plugin.sortExplorer()
@@ -42,7 +42,7 @@ export function populateFileMenu(menu: Menu, file: TAbstractFile, plugin: Flexpl
 		.setIcon(fileSettings.isHidden ? 'eye' : 'eye-off')
 		.onClick(() => {
 			fileSettings.isHidden = !fileSettings.isHidden
-			plugin.log(`Toggling hidden state for '${file.path}' to ${fileSettings.isHidden}`)
+			plugin.log(`Toggled hidden state for '${file.path}' to ${fileSettings.isHidden}`)
 			void plugin.saveSettings()
 			plugin.explorerManager.syncIndicators()
 		}),
