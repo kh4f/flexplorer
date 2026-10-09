@@ -17,6 +17,7 @@ export class DndEngine {
 	private dropFolder: HTMLElement | null = null
 	private insertSide: 'before' | 'after' = 'before'
 	private pointer = { x: 0, y: 0 }
+	private readonly levelOffset = 5
 
 	private readonly autoscrollZoneHeight = 60
 	private readonly edgeScrollSpeed = 20
@@ -216,7 +217,7 @@ export class DndEngine {
 			if (isDraggedPinned && !areInSameFolder) continue
 
 			const candidateRect = candidate.getBoundingClientRect()
-			const distToBottom = Math.abs(this.pointer.y - candidateRect.bottom)
+			const distToBottom = Math.abs(this.pointer.y - this.virtualBottom(candidate, candidateRect))
 			const isFirstUnpinned = candidate.matches('.tree-item:nth-child(1 of .tree-item)')
 				|| (!isDraggedPinned && candidate === firstUnpinnedByParent.get(candidate.parentElement!))
 			const distToTop = isFirstUnpinned ? Math.abs(this.pointer.y - candidateRect.top) : Infinity
@@ -228,6 +229,30 @@ export class DndEngine {
 				this.insertSide = distToBottom < distToTop ? 'after' : 'before'
 			}
 		}
+	}
+
+	/**
+	 * Bottom edge of the candidate for the distance comparison, offset down by one `levelOffset` per nesting
+	 * level.
+	 *
+	 * An expanded folder's bottom coincides with its last child's bottom, and since a folder precedes its
+	 * children in the DOM, plain distances would always pick "insert after the folder", making drops at the
+	 * end of nested folders unreachable. The old drag-only `padding-bottom` created these per-level hit zones
+	 * in the DOM, but CSS is not an option: a layout change during `dragstart` moves the rows, and Chromium
+	 * cancels the drag as soon as the source row ends up outside the cursor (Chromium issue 401638413).
+	 */
+	private virtualBottom(el: HTMLElement, rect: DOMRect): number {
+		let bottom = rect.bottom
+
+		let folder = el.matches('.nav-folder:not(.is-collapsed)') ? el : null
+		while (folder) {
+			bottom += this.levelOffset
+			folder = folder.querySelector<HTMLElement>(
+				':scope > .nav-folder-children > .tree-item:nth-last-child(1 of .tree-item)'
+				+ '.nav-folder:not(.is-collapsed)')
+		}
+
+		return bottom
 	}
 
 	private resolveHoveredFolder(isDraggedPinned: boolean): void {
@@ -433,11 +458,6 @@ body.fp-dragging {
 	[data-type='file-explorer'] .nav-files-container {
 		/* disable Chromium's native autoscroll */
 		overflow: hidden !important;
-
-		/* offset the bottom edge of nested folders so the drop indicator can be positioned at each level */
-		.nav-folder-children {
-			padding-bottom: 5px;
-		}
 
 		.tree-item[data-drop-sibling] {
 			/* drop line */
