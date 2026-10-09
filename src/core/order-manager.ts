@@ -138,8 +138,6 @@ export class OrderManager {
 			if (siblingPath) {
 				const siblingIndex = toParent.customOrder.indexOf(this.getName(siblingPath))
 				insertIndex = insertSide === 'before' ? siblingIndex : siblingIndex + 1
-			} else if (!parentChanged) {
-				insertIndex = fromIndex
 			}
 
 			fromParent.customOrder = fromParent.customOrder.filter(p => {
