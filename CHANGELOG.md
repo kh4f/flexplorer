@@ -1,5 +1,13 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.0.3  `
+
+### &emsp; 🩹 Fixes
+- **Stable position after unpinning**: pinning an item now moves it to the top of its folder, so unpinning puts it back at the top instead of at a random spot after its siblings were reordered. [🡥](https://github.com/kh4f/flexplorer/commit/e3e06ec)
+- **Consistent drop onto a folder title**: dropping an item onto a folder title now always places it at the top of that folder. Previously it stayed in place when dropped into its own folder, while moving to another folder put it at the top. [🡥](https://github.com/kh4f/flexplorer/commit/495ad91)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/5.0.2...5.0.3) &ensp;•&ensp; Oct 9, 2026
+
 ## &ensp; ` 🏷️ 5.0.2  `
 
 ### &emsp; 🩹 Fixes
