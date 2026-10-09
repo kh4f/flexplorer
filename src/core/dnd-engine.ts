@@ -114,15 +114,21 @@ export class DndEngine {
 		if (!this.draggedItem) return
 		this.log(`Dropped '${this.draggedItem.path}'`)
 
-		if (!this.explorerEl?.contains(event.target as Node)) {
+		if (this.explorerEl?.contains(event.target as Node)) {
+			event.preventDefault() // cancel the default action so Obsidian skips its own file move
+			this.commitDrop()
+		} else {
 			this.log('Dropped outside the explorer, skipping the move')
-			// call `onDragEnd()` manually because `dragend` doesn't fire when the drag source is scrolled out of
-			// view by Chromium autoscroll (same behavior as `drag`)
-			this.onDragEnd()
-			return
 		}
 
-		event.preventDefault() // cancel the default action so Obsidian skips its own file move
+		// finish the drag here instead of waiting for `dragend`: it is fired at the source element, so it never
+		// reaches us once that element has been removed from the DOM — Obsidian removes the row during an autoscrolled
+		// drag; a `dragend` that still fires afterwards is ignored by the `draggedItem` guard in `onDragEnd()`
+		this.onDragEnd()
+	}
+
+	private commitDrop(): void {
+		if (!this.draggedItem) return
 
 		let dropSiblingPath = this.resolveItemPath(this.dropSibling)
 		const dropFolderPath = this.resolveItemPath(this.dropFolder)
