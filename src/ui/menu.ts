@@ -32,6 +32,7 @@ export function populateFileMenu(menu: Menu, file: TAbstractFile, plugin: Flexpl
 		.onClick(() => {
 			fileSettings.isPinned = !fileSettings.isPinned
 			plugin.log(`Toggling pinned state for '${file.path}' to ${fileSettings.isPinned}`)
+			if (fileSettings.isPinned) plugin.orderManager.move(file.path, file.path)
 			void plugin.saveSettings()
 			plugin.sortExplorer()
 			plugin.explorerManager.syncIndicators()
