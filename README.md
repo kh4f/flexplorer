@@ -18,7 +18,7 @@
 		<a href="#-credits">Credits</a>
 	</b>
 	<br><br>
-	<img alt="demo" src="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/demo.gif">
+	<img alt="demo" src="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/demo.webp">
 </div>
 
 ## ✨ Features
