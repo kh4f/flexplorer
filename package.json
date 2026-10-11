@@ -14,7 +14,7 @@
 	"scripts": {
 		"dev": "tsdown -w",
 		"build": "tsdown",
-		"lint": "tsc && eslint"
+		"lint": "bun check && eslint"
 	},
 	"devDependencies": {
 		"@eslint-react/eslint-plugin": "^5.23.3",
