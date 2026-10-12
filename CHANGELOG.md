@@ -1,5 +1,12 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.0.4  `
+
+### &emsp; 🩹 Fixes
+- **Renaming keeps the item's position**: renaming an item inside its folder no longer moves it to the top of the folder. [🡥](https://github.com/kh4f/flexplorer/commit/76a108e)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/5.0.3...5.0.4) &ensp;•&ensp; Oct 12, 2026
+
 ## &ensp; ` 🏷️ 5.0.3  `
 
 ### &emsp; 🩹 Fixes
