@@ -111,6 +111,26 @@ export class OrderManager {
 		this.persistCreateDeleteChange()
 	}
 
+	rename(oldPath: string, newPath: string): void {
+		const parentPath = this.getParentPath(newPath)
+		if (this.getParentPath(oldPath) !== parentPath) return this.move(oldPath, newPath)
+
+		const items = this.plugin.settings.items
+		if (!(oldPath in items)) return this.log('No settings entry for the renamed item, skipping the rename')
+		this.log(`Renaming '${oldPath}' to '${newPath}' in place`)
+
+		items[newPath] = items[oldPath]
+		delete items[oldPath]
+
+		// replace the name where it is, so a rename keeps the item's position
+		const parent = items[parentPath] as FolderSettings | undefined
+		const index = parent?.customOrder.indexOf(this.getName(oldPath)) ?? -1
+		if (parent && index !== -1) parent.customOrder[index] = this.getName(newPath)
+
+		void this.plugin.saveSettings()
+		this.plugin.sortExplorer()
+	}
+
 	move(oldPath: string, newPath: string, siblingPath?: string, insertSide?: 'before' | 'after'): void {
 		this.log(`Moving '${oldPath}' to '${newPath}' ${insertSide} '${siblingPath}'`)
 		if (oldPath === newPath && siblingPath === newPath) return this.log('No move needed')

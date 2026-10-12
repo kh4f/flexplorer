@@ -79,7 +79,7 @@ export default class Flexplorer extends Plugin {
 		}))
 		this.registerEvent(this.app.vault.on('rename', (item, oldPath) => {
 			this.log(`Item renamed: '${oldPath}' -> '${item.path}'`)
-			this.orderManager.move(oldPath, item.path)
+			this.orderManager.rename(oldPath, item.path)
 			this.explorerManager.syncIndicators()
 		}))
 		this.registerEvent(this.app.vault.on('delete', item => {
