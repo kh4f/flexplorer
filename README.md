@@ -7,7 +7,7 @@
 	<b>🗃️ Obsidian File Explorer Enhancer</b>
 	<br><br>
 	<p>
-		<a href="https://github.com/kh4f/flexplorer/releases"><img alt="version" src="https://img.shields.io/github/v/tag/kh4f/flexplorer?style=flat-square&labelColor=7D00EB&color=ECD8FD&label=%F0%9F%8F%B7%EF%B8%8F%20release"></a>&nbsp;
+		<a href="https://github.com/kh4f/flexplorer/releases"><img alt="release" src="https://img.shields.io/github/v/tag/kh4f/flexplorer?style=flat-square&labelColor=7D00EB&color=ECD8FD&label=%F0%9F%8F%B7%EF%B8%8F%20release"></a>&nbsp;
 		<a href='https://community.obsidian.md/plugins/flexplorer'><img alt="downloads" src="https://img.shields.io/badge/dynamic/json?style=flat-square&labelColor=7D00EB&color=ECD8FD&logo=obsidian&label=downloads&query=%24%5B%22flexplorer%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json"></a>&nbsp;
 		<a href="https://github.com/kh4f/flexplorer/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/kh4f/flexplorer?style=flat-square&labelColor=7D00EB&color=ECD8FD&label=%F0%9F%9B%A1%EF%B8%8F%20license"></a>
 	</p>
