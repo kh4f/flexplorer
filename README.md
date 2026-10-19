@@ -34,7 +34,12 @@
 - **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, `styles.css` into `vault/.obsidian/plugins/flexplorer/`
 
 ## 🕹️ Usage
-![guide](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/guide.png)
+![context menus](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/menus.png)
+
+- **Per-folder sorting:** for regular folders, select `Sort order` from the context menu. For the root folder, use the `Change sort order` button at the top of the file explorer.
+- **Custom sorting:** select `Custom order` for the folder, then drag and drop items to rearrange them. On touch devices, long-press an item first.
+- **Pinning:** select `Pin` / `Unpin` from an item's context menu.
+- **Hiding:** select `Hide` / `Unhide` from an item's context menu, or configure `Hide patterns` in the plugin settings. To reveal all hidden items, select `Show hidden` from the root folder's sort menu.
 
 ## 💖 Credits
 - **Inspiration**: [Obsidian Bartender](https://github.com/Mara-Li/obsidian-bartender), [Custom File Explorer sorting](https://github.com/SebastianMC/obsidian-custom-sort), [File Explorer++](https://github.com/kelszo/obsidian-file-explorer-plus)
