@@ -1,11 +1,11 @@
-name: Release
+name: CD
 
 on:
   push:
     tags: '*.*.*'
 
 jobs:
-  release:
+  cd:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
