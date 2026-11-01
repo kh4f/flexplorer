@@ -1,5 +1,5 @@
 import { TAbstractFile, TFile, TFolder } from 'obsidian'
-import type { FileTreeItem } from 'obsidian-typings'
+import type { FileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
 import { initLog } from '@/utils'
 import type Flexplorer from '@/plugin'
@@ -216,7 +216,10 @@ export class OrderManager {
 		this.log(`Staged copy state from '${sourcePath}' to '${copyPath}'`)
 	}
 
-	getSortedItems(folderSettings: FolderSettings, items: FileTreeItem[]): FileTreeItem[] {
+	getSortedItems(
+		folderSettings: FolderSettings,
+		items: (FileTreeItem | FolderTreeItem)[],
+	): (FileTreeItem | FolderTreeItem)[] {
 		return items.slice().sort((aItem, bItem) => {
 			const [a, b] = [aItem.file, bItem.file]
 			const isAPinned = this.plugin.settings.items[a.path].isPinned

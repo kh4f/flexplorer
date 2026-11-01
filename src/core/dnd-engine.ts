@@ -1,5 +1,5 @@
 import { TAbstractFile, TFile, TFolder } from 'obsidian'
-import type { AbstractFileTreeItem, FolderTreeItem } from 'obsidian-typings'
+import type { FileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
 import { initLog } from '@/utils'
 import type Flexplorer from '@/plugin'
@@ -324,7 +324,7 @@ export class DndEngine {
 		this.expandTarget = null
 	}
 
-	private getSelectedItems(): AbstractFileTreeItem<TFile>[] {
+	private getSelectedItems(): (FileTreeItem | FolderTreeItem)[] {
 		const selectedItems = [...this.plugin.getExplorerView().tree.selectedDoms]
 		const nonNestedItems = selectedItems.filter(selected => !selectedItems.some(selectedFolder =>
 			selectedFolder.file instanceof TFolder
