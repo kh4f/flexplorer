@@ -22,6 +22,7 @@
 </div>
 
 ## ✨ Features
+
 - **Custom sorting:** manually arrange items via drag-and-drop
 - **Per-folder sorting:** use a different sorting mode for each folder
 - **Pinning:** keep important files at the top
@@ -29,11 +30,13 @@
 - **Mobile support:** works the same way on mobile
 
 ## 📥 Install
+
 - **Via the Obsidian Community**: https://community.obsidian.md/plugins/flexplorer
 - **Using the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)**: `Add Beta Plugin` → `kh4f/flexplorer`
 - **Manually**: [download](https://github.com/kh4f/flexplorer/releases/latest) `manifest.json`, `main.js`, `styles.css` into `vault/.obsidian/plugins/flexplorer/`
 
 ## 🕹️ Usage
+
 ![context menus](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/menus.png)
 
 - **Per-folder sorting:** for regular folders, select `Sort order` from the context menu. For the root folder, use the `Change sort order` button at the top of the file explorer.
@@ -42,6 +45,7 @@
 - **Hiding:** select `Hide` / `Unhide` from an item's context menu, or configure `Hide patterns` in the plugin settings. To reveal all hidden items, select `Show hidden` from the root folder's sort menu.
 
 ## 💖 Credits
+
 - **Inspiration**: [Obsidian Bartender](https://github.com/Mara-Li/obsidian-bartender), [Custom File Explorer sorting](https://github.com/SebastianMC/obsidian-custom-sort), [File Explorer++](https://github.com/kelszo/obsidian-file-explorer-plus)
 - **Code contributions**: [@Mara-Li](https://github.com/Mara-Li), [@michalgregor](https://github.com/michalgregor), [@MichalNawrocik](https://github.com/MichalNawrocik)
 - **Bug reports & feature requests**: [@Zweikeks](https://github.com/Zweikeks), [@Azmoinal](https://github.com/Azmoinal), [@SublimePeace](https://github.com/SublimePeace), [@AE-SAY-WAY](https://github.com/AE-SAY-WAY), [@Anonym0usPlayer](https://github.com/Anonym0usPlayer), [@73mtq](https://github.com/73mtq), [@toya-co](https://github.com/toya-co), [@Succubyte](https://github.com/Succubyte), [@RainyGrass](https://github.com/RainyGrass), [@akshatg](https://github.com/akshatg)
