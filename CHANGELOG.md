@@ -1,5 +1,16 @@
 # Changelog
 
+## &ensp; ` 🏷️ 5.1.0  `
+
+### &emsp; ✨ Features
+- **Copy placement**: added a setting to choose whether an item created via "Make a copy" is placed above or below its original in the custom order. [🡥](https://github.com/kh4f/flexplorer/commit/80ae6f7f8e27d479515f33be25b4fd209de7bcc1)
+
+### &emsp; 📋 Docs
+- **Expanded README usage section**: documented sorting, pinning and hiding instructions. [🡥](https://github.com/kh4f/flexplorer/commit/3d0d1e76bfd2ddfdb308fe6fa006ad79d6092b68)
+- **Clearer setting descriptions**: reworded the placement and persistence setting descriptions. [🡥](https://github.com/kh4f/flexplorer/commit/0a3529ede3f6fedb3900f501cf4f963a311d32b6) [🡥](https://github.com/kh4f/flexplorer/commit/9f755d3f8bd7395792d82da3fb19ece4f55eaf7e)
+
+##### &emsp;&emsp; [Commit log](https://github.com/kh4f/flexplorer/compare/5.0.4...5.1.0) &ensp;•&ensp; Nov 1, 2026
+
 ## &ensp; ` 🏷️ 5.0.4  `
 
 ### &emsp; 🩹 Fixes
