@@ -24,6 +24,10 @@ jobs:
       - uses: actions/attest@v4
         with:
           subject-path: manifest.json, main.js, styles.css
-      - run: gh release create $TAG --title $TAG --draft manifest.json main.js styles.css
+      - name: Create release
+        run: |
+          awk '/^## /{found++; next} found==1' CHANGELOG.md |
+            gh release create $TAG --title $TAG --draft --notes-file - \
+              manifest.json main.js styles.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
