@@ -7,8 +7,8 @@
 	"repository": "https://github.com/kh4f/flexplorer",
 	"homepage": "https://github.com/kh4f/flexplorer",
 	"bugs": "https://github.com/kh4f/flexplorer/issues",
-	"keywords": [ "obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting" ],
-	"trustedDependencies": [ "obsidian-typings" ],
+	"keywords": ["obsidian", "obsidian-plugin", "file-explorer", "file-management", "custom-sorting"],
+	"trustedDependencies": ["obsidian-typings"],
 	"type": "module",
 	"main": "main.js",
 	"scripts": {
@@ -17,22 +17,22 @@
 		"lint": "bun check && eslint"
 	},
 	"devDependencies": {
-		"@eslint-react/eslint-plugin": "^5.26.7",
+		"@eslint-react/eslint-plugin": "^5.28.8",
 		"@kh4f/eslint-config": "^0.7.0",
-		"@tsdown/css": "^0.23.1",
-		"@types/bun": "^1.4.3",
+		"@tsdown/css": "^0.23.4",
+		"@types/bun": "^1.4.4",
 		"@types/react-dom": "^19.3.0",
-		"eslint": "^10.12.0",
+		"eslint": "^10.14.0",
 		"eslint-plugin-obsidianmd": "^0.4.2",
 		"eslint-plugin-react-hooks": "^7.1.1",
 		"obsidian": "^1.14.4",
-		"obsidian-typings": "^6.41.0",
+		"obsidian-typings": "^6.56.0",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
-		"tsdown": "^0.23.1",
+		"tsdown": "^0.23.4",
 		"typescript": "^6.0.3",
-		"voicss": "^0.2.0",
-		"voicss-eslint": "^0.3.1"
+		"voicss": "^0.2.1",
+		"voicss-eslint": "^0.3.2"
 	},
 	"overrides": {
 		"moment": "^2.31.0"
