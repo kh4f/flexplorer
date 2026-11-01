@@ -13,7 +13,7 @@ export class SettingsTab extends PluginSettingTab {
 		return [
 			{
 				name: 'New item placement',
-				desc: 'Default placement for new items inside a folder',
+				desc: 'Placement of new items inside a folder',
 				control: {
 					type: 'dropdown',
 					key: 'newItemPlacement',
