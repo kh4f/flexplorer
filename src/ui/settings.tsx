@@ -70,9 +70,11 @@ export class SettingsTab extends PluginSettingTab {
 			{
 				name: 'Persist order on create/delete',
 				desc: createFragment(frag => {
-					frag.append('Update data.json immediately when files are created or deleted. ' +
-						'Disable this if your sync service, especially Obsidian Sync, causes sync conflicts ' +
-						'when merging data.json across devices.')
+					frag.append('Save the custom order to data.json immediately after files are created or deleted. ' +
+						'Disable this if you sync your vault in real time ' +
+						'(e.g. via Obsidian Sync, Google Drive, or iCloud) ' +
+						'while Obsidian is running on multiple devices. ' +
+						'Changes will then be saved later, after a drag-and-drop operation or an Obsidian restart.')
 					frag.createEl('br')
 					frag.createEl('a', {
 						text: '(Issue #120)',
