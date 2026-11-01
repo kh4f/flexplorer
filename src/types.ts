@@ -3,6 +3,7 @@ export interface Settings {
 	showHidden: boolean
 	hidePatterns: string[]
 	newItemPlacement: 'top' | 'bottom'
+	copyPlacement: 'above' | 'below'
 	persistOrderOnCreateDelete: boolean
 	debugMode: boolean
 }

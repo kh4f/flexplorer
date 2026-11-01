@@ -22,6 +22,16 @@ export class SettingsTab extends PluginSettingTab {
 				},
 			},
 			{
+				name: 'Copy placement',
+				desc: 'Placement of copied items relative to their originals',
+				control: {
+					type: 'dropdown',
+					key: 'copyPlacement',
+					defaultValue: 'above',
+					options: { above: 'Above', below: 'Below' },
+				},
+			},
+			{
 				name: 'Hide patterns',
 				desc: createFragment(frag => {
 					frag.append('Patterns matching items to hide, one per line.')

@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: Settings = {
 	showHidden: false,
 	hidePatterns: [],
 	newItemPlacement: 'top',
+	copyPlacement: 'above',
 	persistOrderOnCreateDelete: true,
 	debugMode: !!process.env.DEV,
 }

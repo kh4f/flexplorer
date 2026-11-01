@@ -96,11 +96,11 @@ export class OrderManager {
 		// a copied child is already listed in the restored `customOrder` of its parent, so only
 		// genuinely new items get appended, otherwise duplicates would shadow the restored order
 		if (!parentItem.customOrder.includes(item.name)) {
-			// a copy created next to its source is inserted right after it
 			const sourceName = staged?.sourceName
 			if (sourceName) {
 				const sourceIndex = parentItem.customOrder.indexOf(sourceName)
-				parentItem.customOrder.splice(sourceIndex + 1, 0, item.name)
+				const offset = this.plugin.settings.copyPlacement === 'above' ? 0 : 1
+				parentItem.customOrder.splice(sourceIndex + offset, 0, item.name)
 			} else if (insertPos === 'top') {
 				parentItem.customOrder.unshift(item.name)
 			} else {
