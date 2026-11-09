@@ -7,6 +7,13 @@ export default defineConfig([
 	globalIgnores(['main.js']),
 	{ files: ['src/**/*.ts?(x)'], extends: obsidian.configs.recommended },
 	await kh4f({ react: true }),
-	{ rules: { '@typescript-eslint/no-dynamic-delete': 'off' } },
 	voicss.configs.recommended,
+	{
+		rules: {
+			'@typescript-eslint/no-dynamic-delete': 'off',
+			// the plugin only targets the file explorer, which always lives in the main window's sidebar,
+			// so the global `document` is intentional and `activeDocument` (which may point to a popout) is wrong here
+			'obsidianmd/prefer-active-doc': 'off',
+		},
+	},
 ])
