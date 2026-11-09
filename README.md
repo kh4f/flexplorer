@@ -1,25 +1,12 @@
-<div align="center">
-	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/logo-dark.png">
-		<img alt="logo" src="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/logo-light.png">
-	</picture>
-	<br>
-	<b>🗃️ Obsidian File Explorer Enhancer</b>
-	<br><br>
-	<p>
-		<a href="https://github.com/kh4f/flexplorer/releases"><img alt="release" src="https://img.shields.io/github/v/tag/kh4f/flexplorer?style=flat-square&labelColor=7D00EB&color=ECD8FD&label=%F0%9F%8F%B7%EF%B8%8F%20release"></a>&nbsp;
-		<a href='https://community.obsidian.md/plugins/flexplorer'><img alt="downloads" src="https://img.shields.io/badge/dynamic/json?style=flat-square&labelColor=7D00EB&color=ECD8FD&logo=obsidian&label=downloads&query=%24%5B%22flexplorer%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json"></a>&nbsp;
-		<a href="https://github.com/kh4f/flexplorer/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/kh4f/flexplorer?style=flat-square&labelColor=7D00EB&color=ECD8FD&label=%F0%9F%9B%A1%EF%B8%8F%20license"></a>
-	</p>
-	<b>
-		<a href="#-features">Features</a>&nbsp; •&nbsp;
-		<a href="#%EF%B8%8F-usage">Usage</a>&nbsp; •&nbsp;
-		<a href="#-install">Install</a>&nbsp; •&nbsp;
-		<a href="#-credits">Credits</a>
-	</b>
-	<br><br>
-	<img alt="demo" src="https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/demo.avif">
-</div>
+# 🗃️ Flexplorer
+
+[![release](https://img.shields.io/github/v/tag/kh4f/flexplorer?style=flat-square&labelColor=FF3424&color=EDDEDE&label=%F0%9F%8F%B7%EF%B8%8F%20release)](https://github.com/kh4f/flexplorer/releases)
+[![downloads](https://img.shields.io/badge/dynamic/json?style=flat-square&labelColor=FF3424&color=EDDEDE&logo=obsidian&label=downloads&query=%24%5B%22flexplorer%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://community.obsidian.md/plugins/flexplorer)
+[![license](https://img.shields.io/github/license/kh4f/flexplorer?style=flat-square&labelColor=FF3424&color=EDDEDE&label=%F0%9F%9B%A1%EF%B8%8F%20license)](https://github.com/kh4f/flexplorer/blob/main/LICENSE)
+
+**Obsidian File Explorer Enhancer**
+
+![demo](https://raw.githubusercontent.com/kh4f/flexplorer/refs/heads/assets/demo.avif)
 
 ## ✨ Features
 
