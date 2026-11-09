@@ -28,8 +28,8 @@
 
 - **Per-folder sorting:** for regular folders, select `Sort order` from the context menu. For the root folder, use the `Change sort order` button at the top of the file explorer.
 - **Custom sorting:** select `Custom order` for the folder, then drag and drop items to rearrange them. On touch devices, long-press an item first.
-- **Pinning:** select `Pin` / `Unpin` from an item's context menu.
-- **Hiding:** select `Hide` / `Unhide` from an item's context menu, or configure `Hide patterns` in the plugin settings. To reveal all hidden items, select `Show hidden` from the root folder's sort menu.
+- **Pinning:** select `Pin`/`Unpin` from an item's context menu.
+- **Hiding:** select `Hide`/`Unhide` from an item's context menu, or configure `Hide patterns` in the plugin settings. To reveal all hidden items, select `Show hidden` from the root folder's sort menu.
 
 ## 💖 Credits
 
