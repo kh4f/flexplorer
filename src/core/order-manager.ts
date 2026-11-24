@@ -1,9 +1,10 @@
 import { TAbstractFile, TFile, TFolder } from 'obsidian'
 import type { FileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
+import { TIMESTAMP_SORT_ORDERS } from '@/types'
 import { initLog } from '@/utils'
 import type Flexplorer from '@/plugin'
-import type { BaseItemSettings, FolderSettings, ItemSettings } from '@/types'
+import type { BaseItemSettings, FolderSettings, ItemSettings, SortOrder } from '@/types'
 
 const DEFAULT_ITEM_SETTINGS: BaseItemSettings = { isPinned: false, isHidden: false }
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
@@ -29,6 +30,19 @@ export class OrderManager {
 		const newChildren = this.plugin.getExplorerView().getSortedFolderItems(folder).map(item => item.file.name)
 		const oldChildren = oldSettings?.customOrder ?? []
 
+		// During startup the explorer may report no children for a folder whose contents haven't
+		// mounted yet (e.g. a virtual/mounted folder). Rebuilding from an empty list would wipe
+		// the saved order; skip and keep it until a later sync sees the real children.
+		if (newChildren.length === 0 && oldChildren.length > 0) {
+			this.plugin.settings.items[folderPath] = {
+				...DEFAULT_ITEM_SETTINGS,
+				sortOrder: 'custom',
+				...oldSettings,
+				customOrder: oldChildren,
+			}
+			return
+		}
+
 		let mergedChildren = oldChildren.filter(p => newChildren.includes(p))
 		const addedChildren = newChildren.filter(p => !oldChildren.includes(p))
 		mergedChildren = this.plugin.settings.newItemPlacement === 'top'
@@ -53,9 +67,15 @@ export class OrderManager {
 				this.plugin.settings.items[child.path] = {
 					...DEFAULT_ITEM_SETTINGS,
 					...prevSettings,
-					// fall back to the OS stats for items that predate the plugin's own tracking
-					ctime: prevSettings?.ctime ?? child.stat.ctime,
-					mtime: prevSettings?.mtime ?? child.stat.mtime,
+					// timestamp tracking can be turned off to keep `data.json` free of values that change on
+					// every sync; existing values are then left untouched rather than refreshed
+					...(this.plugin.settings.storeItemTimestamps
+						? {
+							// fall back to the OS stats for items that predate the plugin's own tracking
+							ctime: prevSettings?.ctime ?? child.stat.ctime,
+							mtime: prevSettings?.mtime ?? child.stat.mtime,
+						}
+						: {}),
 				}
 			}
 		}
@@ -88,8 +108,7 @@ export class OrderManager {
 			items[item.path] = {
 				...DEFAULT_ITEM_SETTINGS,
 				...(isFolder ? { customOrder: [], sortOrder: 'custom' } : {}),
-				ctime: Date.now(),
-				mtime: Date.now(),
+				...(this.plugin.settings.storeItemTimestamps ? { ctime: Date.now(), mtime: Date.now() } : {}),
 			}
 		}
 
@@ -226,7 +245,9 @@ export class OrderManager {
 			const isBPinned = this.plugin.settings.items[b.path].isPinned
 			if (isAPinned !== isBPinned) return isAPinned ? -1 : 1
 
-			if (folderSettings.sortOrder !== 'custom') {
+			// grouping folders first applies to the name/time sorts; `custom` always follows the
+			// stored order verbatim, since that order already reflects where the user dragged items
+			if (this.plugin.settings.foldersFirst && folderSettings.sortOrder !== 'custom') {
 				const isAFolder = a instanceof TFolder
 				const isBFolder = b instanceof TFolder
 				if (isAFolder !== isBFolder) return isAFolder ? -1 : 1
@@ -236,8 +257,12 @@ export class OrderManager {
 				case 'custom': {
 					const aIndex = folderSettings.customOrder.indexOf(a.name)
 					const bIndex = folderSettings.customOrder.indexOf(b.name)
-					if (aIndex === -1 || bIndex === -1) return this.compareByName(a, b)
-					return aIndex - bIndex
+					// an item missing from the stored order falls back to name position, not to a
+					// name comparison, so it does not collapse the whole comparator into name order
+					const aRank = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex
+					const bRank = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex
+					if (aRank !== bRank) return aRank - bRank
+					return this.compareByName(a, b)
 				}
 				case 'byNameDesc': return this.compareByName(b, a)
 				case 'byCreatedTimeAsc': return this.compareByTimestamp(a, b, 'ctime', 'asc')
@@ -260,9 +285,61 @@ export class OrderManager {
 		type: 'ctime' | 'mtime',
 		direction: 'asc' | 'desc',
 	): number {
-		const aTimestamp = a instanceof TFile ? this.plugin.settings.items[a.path][type] ?? -Infinity : -Infinity
-		const bTimestamp = b instanceof TFile ? this.plugin.settings.items[b.path][type] ?? -Infinity : -Infinity
+		const aTimestamp = this.getTimestamp(a, type)
+		const bTimestamp = this.getTimestamp(b, type)
 		return direction === 'asc' ? aTimestamp - bTimestamp : bTimestamp - aTimestamp
+	}
+
+	private getTimestamp(file: TAbstractFile, type: 'ctime' | 'mtime'): number {
+		if (!(file instanceof TFile)) return -Infinity
+		return this.plugin.settings.items[file.path][type] ?? -Infinity
+	}
+
+	/**
+	 * Fills in timestamps for items that have none, e.g. files created while timestamp storage was
+	 * off. Only missing values are written, so it never disturbs existing tracking or sort orders.
+	 */
+	backfillTimestamps(): void {
+		const items = this.plugin.settings.items
+		let filled = 0
+
+		for (const [path, settings] of Object.entries(items)) {
+			if ('sortOrder' in settings) continue
+			if (settings.ctime !== undefined && settings.mtime !== undefined) continue
+
+			const file = this.plugin.app.vault.getFileByPath(path)
+			if (!file) continue
+
+			settings.ctime ??= file.stat.ctime
+			settings.mtime ??= file.stat.mtime
+			filled++
+		}
+
+		if (filled === 0) return this.log('No timestamps to backfill')
+		this.log(`Backfilled timestamps for ${filled} item(s)`)
+		void this.plugin.saveSettings()
+	}
+
+	/**
+	 * Moves every folder using a timestamp sort back to a sort it can still honour, so disabling
+	 * timestamp storage never leaves a folder on a sort whose data source is no longer maintained.
+	 * Falls back to the folder's own custom order when it has one, otherwise to name order.
+	 */
+	resetTimestampSorts(): void {
+		const items = this.plugin.settings.items
+		let changed = false
+
+		for (const settings of Object.values(items)) {
+			if (!('sortOrder' in settings)) continue
+			if (!TIMESTAMP_SORT_ORDERS.includes(settings.sortOrder)) continue
+
+			const fallback: SortOrder = settings.customOrder.length > 0 ? 'custom' : 'byNameAsc'
+			this.log(`Resetting timestamp sort '${settings.sortOrder}' to '${fallback}'`)
+			settings.sortOrder = fallback
+			changed = true
+		}
+
+		if (changed) void this.plugin.saveSettings()
 	}
 
 	private getName(path: string): string {

@@ -5,6 +5,8 @@ export interface Settings {
 	newItemPlacement: 'top' | 'bottom'
 	copyPlacement: 'above' | 'below'
 	persistOrderOnCreateDelete: boolean
+	foldersFirst: boolean
+	storeItemTimestamps: boolean
 	debugMode: boolean
 }
 
@@ -29,3 +31,11 @@ export type SortOrder =
 	| 'byCreatedTimeDesc'
 	| 'byModifiedTimeAsc'
 	| 'byModifiedTimeDesc'
+
+/** sort orders that read the plugin-tracked `ctime`/`mtime` values */
+export const TIMESTAMP_SORT_ORDERS: readonly SortOrder[] = [
+	'byCreatedTimeAsc',
+	'byCreatedTimeDesc',
+	'byModifiedTimeAsc',
+	'byModifiedTimeDesc',
+]

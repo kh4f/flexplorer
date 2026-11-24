@@ -1,5 +1,6 @@
 import { Menu, TAbstractFile, TFolder } from 'obsidian'
 
+import { TIMESTAMP_SORT_ORDERS } from '@/types'
 import { ConfirmModal } from '@/ui/modal'
 import type Flexplorer from '@/plugin'
 import type { FolderSettings, SortOrder } from '@/types'
@@ -57,6 +58,9 @@ export function populateSortMenu(
 	folderSettings: FolderSettings,
 ): Menu {
 	SORT_OPTIONS.forEach(([title, sortOrder]) => {
+		// hide time-based sorts when timestamp storage is off: their data source is no longer maintained
+		if (!plugin.settings.storeItemTimestamps && TIMESTAMP_SORT_ORDERS.includes(sortOrder)) return
+
 		menu.addItem(item => item
 			.setTitle(title)
 			.setChecked(currentSortOrder === sortOrder)

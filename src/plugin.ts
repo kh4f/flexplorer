@@ -9,7 +9,7 @@ import { Patcher } from '@/core/patcher'
 import { populateFileMenu } from '@/ui/menu'
 import { SettingsTab } from '@/ui/settings'
 import { initLog, logger } from '@/utils'
-import type { FolderSettings, Settings, SortOrder } from '@/types'
+import type { BaseItemSettings, FolderSettings, Settings, SortOrder } from '@/types'
 
 const DEFAULT_SETTINGS: Settings = {
 	items: {},
@@ -18,6 +18,8 @@ const DEFAULT_SETTINGS: Settings = {
 	newItemPlacement: 'top',
 	copyPlacement: 'above',
 	persistOrderOnCreateDelete: true,
+	foldersFirst: true,
+	storeItemTimestamps: true,
 	debugMode: !!process.env.DEV,
 }
 
@@ -48,6 +50,9 @@ export default class Flexplorer extends Plugin {
 			// must run on explorer mount: `getSortedFolderItems()` doesn't exist until then
 			// must run before patching: `sync()` needs the original `getSortedFolderItems()`
 			this.orderManager.syncItems()
+			// the setting may arrive turned off from a synced data.json, in which case folders could
+			// still be on a timestamp sort whose menu entry is hidden: normalise that on load too
+			this.normaliseTimestampState()
 			this.patcher.patchExplorerSorting()
 			this.sortExplorer()
 			this.dndEngine.attach(el)
@@ -88,8 +93,10 @@ export default class Flexplorer extends Plugin {
 			this.orderManager.remove(item.path)
 		}))
 		this.registerEvent(this.app.vault.on('modify', item => {
-			const itemSettings = this.settings.items[item.path]
-			itemSettings.mtime = Date.now()
+			if (this.settings.storeItemTimestamps) {
+				const itemSettings = this.settings.items[item.path] as BaseItemSettings | undefined
+				if (itemSettings) itemSettings.mtime = Date.now()
+			}
 
 			const parentPath = item.parent!.path
 			const folderSettings = this.settings.items[parentPath] as FolderSettings
@@ -153,8 +160,22 @@ export default class Flexplorer extends Plugin {
 	async onExternalSettingsChange(): Promise<void> {
 		this.log('Settings changed externally, reloading')
 		await this.loadSettings()
+		// data.json may arrive from another device with timestamp storage toggled, so apply the
+		// same normalisation as on load instead of only re-sorting
+		this.normaliseTimestampState()
 		this.sortExplorer()
 		this.explorerManager.syncIndicators()
+	}
+
+	/**
+	 * Keeps timestamp-related state consistent with the current setting: fills in missing values
+	 * when tracking is on, and moves folders off timestamp sorts when it is off. Called on load,
+	 * when data.json changes externally (e.g. after a git pull or a sync), and when the setting
+	 * itself is toggled, since a folder can be left on a timestamp sort whose menu entry is hidden.
+	 */
+	normaliseTimestampState(): void {
+		if (this.settings.storeItemTimestamps) this.orderManager.backfillTimestamps()
+		else this.orderManager.resetTimestampSorts()
 	}
 
 	getExplorerView(): FileExplorerView {

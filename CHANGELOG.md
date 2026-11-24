@@ -4,6 +4,12 @@
 
 ### &emsp; ✨ Features
 - **Copy placement**: added a setting to choose whether an item created via "Make a copy" is placed above or below its original in the custom order. [🡥](https://github.com/kh4f/flexplorer/commit/80ae6f7f8e27d479515f33be25b4fd209de7bcc1)
+- **Optional timestamp storage**: added a *Store item timestamps* setting, on by default. When disabled, new items omit `ctime`/`mtime`, existing ones stop updating, the time-based sort options are hidden, and folders using them fall back to custom order or file name. Re-enabling fills in missing values and restores the menu entries. Useful when the vault is synced across devices or committed to git, where the constantly changing values caused noisy diffs and merge conflicts.
+- **Folders first**: added a *Folders first* setting, on by default, that groups folders above files for the name- and time-based sorts, including folders mounted by plugins such as Folder Bridge. Custom order always follows the saved arrangement.
+
+### &emsp; 🩹 Fixes
+- **Custom order no longer overridden by the default folder-first grouping**: the explorer was seeded from Obsidian's own sorted children, and since `Array#sort` is stable, every folder stayed ahead of every file regardless of the custom order. The comparator now decides the final positions, and items missing from the saved order no longer collapse the whole comparison into name order.
+- **Saved order kept for not-yet-mounted folders**: a folder whose contents have not mounted yet (e.g. a virtual folder during startup) no longer loses its custom order when the explorer reports no children for it.
 
 ### &emsp; 📋 Docs
 - **Expanded README usage section**: documented sorting, pinning and hiding instructions. [🡥](https://github.com/kh4f/flexplorer/commit/3d0d1e76bfd2ddfdb308fe6fa006ad79d6092b68)

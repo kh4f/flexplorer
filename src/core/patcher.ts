@@ -1,5 +1,5 @@
 import { Menu, Vault } from 'obsidian'
-import type { FileExplorerView } from 'obsidian-typings'
+import type { FileExplorerView, FileTreeItem, FolderTreeItem } from 'obsidian-typings'
 
 import { populateSortMenu } from '@/ui/menu'
 import { initLog } from '@/utils'
@@ -45,7 +45,20 @@ export class Patcher {
 		explorerProto.getSortedFolderItems = function (folder) {
 			const origSorted = origGetSortedFolderItems.call(this, folder)
 			const folderSettings = plugin.settings.items[folder.path] as FolderSettings
-			return plugin.orderManager.getSortedItems(folderSettings, origSorted)
+
+			// Obsidian's own sort groups folders first, and `Array#sort` is stable, so feeding it in
+			// would keep every folder ahead of every file no matter what the comparator returns.
+			// Start from the unsorted children whenever folder grouping is off or the order is custom,
+			// so the comparator alone decides the final positions.
+			const needsRawInput = !plugin.settings.foldersFirst || folderSettings.sortOrder === 'custom'
+			if (!needsRawInput) return plugin.orderManager.getSortedItems(folderSettings, origSorted)
+
+			const byPath = new Map(origSorted.map(item => [item.file.path, item]))
+			const rawItems = folder.children
+				.map(child => byPath.get(child.path))
+				.filter((item): item is FileTreeItem | FolderTreeItem => item !== undefined)
+
+			return plugin.orderManager.getSortedItems(folderSettings, rawItems.length > 0 ? rawItems : origSorted)
 		}
 
 		this.unpatchExplorerSorting = () => explorerProto.getSortedFolderItems = origGetSortedFolderItems
